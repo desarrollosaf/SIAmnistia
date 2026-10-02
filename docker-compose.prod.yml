@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: DockerFile
       args:
-        BASE_HREF: /amnistia/
+        BASE_HREF: /
     container_name: siamnistia-frontend
     ports:
       - "8095:80"

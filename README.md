@@ -55,11 +55,13 @@ Usuario inicial: `root@amnistia.gob.mx` con la contraseña de `ROOT_PASSWORD`
 
 - Desarrollo: `docker compose up` (frontend en 4230, backend en 3075; el contenedor del backend
   instala Chromium para los PDFs).
-- Producción: `docker compose -f docker-compose.prod.yml up -d --build`. El frontend se compila con
-  `base-href /amnistia/` y espera el backend en `/amnistia/backend` (igual que SIPresupuesto con
-  `/presupuesto/backend`): configura esa ruta en el nginx del servidor hacia el puerto 3036.
-  Ajusta `APP_URL` a la URL pública (p. ej. `https://servidor/amnistia`), porque con ella se arman las
-  ligas de los correos y el QR del acuse.
+- Producción: `docker compose -f docker-compose.prod.yml up -d --build`. Se sirve en la raíz
+  de `http://amnistia.congresoedomex.gob.mx/`: el frontend se compila con `base-href /` y espera el
+  backend en `/backend`. En el nginx del servidor, `location /` va al puerto 8095 y `location /backend/`
+  al 3036 (con `proxy_pass http://127.0.0.1:3036/;`, la `/` final quita el prefijo, porque Nest no
+  tiene `setGlobalPrefix`). Ajusta `APP_URL` a la URL pública sin diagonal final
+  (`http://amnistia.congresoedomex.gob.mx`), porque con ella se arman las ligas de los correos y el QR
+  del acuse.
 
 ## Migrar los datos del sistema Laravel
 
