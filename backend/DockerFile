@@ -34,7 +34,7 @@ COPY package*.json ./
 
 # Se instalan tambien las devDependencies porque sequelize-cli (migrate/seed)
 # se ejecuta dentro de este contenedor via "docker compose exec backend npm run migrate".
-RUN npm ci
+RUN npm ci --include=dev
 
 COPY --from=build /app/dist ./dist
 
