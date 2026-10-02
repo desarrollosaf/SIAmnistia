@@ -439,8 +439,8 @@
     ancho="ancho"
     (cerrar)="carpetaDelitos.set(null)"
   >
-    <form class="row g-3 align-items-end" [formGroup]="nuevoDelito" (ngSubmit)="agregarDelito()">
-      <div class="col-md-5">
+    <form class="delitos-form" [formGroup]="nuevoDelito" (ngSubmit)="agregarDelito()">
+      <div>
         <label class="form-label" for="m-delito">Delito</label>
         <select id="m-delito" class="form-select" formControlName="delitoId">
           <option [ngValue]="0">Selecciona una opción</option>
@@ -448,40 +448,45 @@
         </select>
       </div>
       @if (delitoEsOtro()) {
-        <div class="col-md-5">
+        <div>
           <label class="form-label" for="m-otro">Nombre del delito</label>
           <input id="m-otro" class="form-control mayusculas" formControlName="delitoOtro" maxlength="255" placeholder="Ej. DAÑO EN LOS BIENES" />
         </div>
       } @else if (delitoElegido()?.modalidades?.length) {
-        <div class="col-md-5">
-          <label class="form-label" for="m-modalidad">Modalidad</label>
-          <select id="m-modalidad" class="form-select" formControlName="modalidadId">
-            <option [ngValue]="0">Selecciona una opción</option>
-            @for (m of delitoElegido()!.modalidades; track m.id) { <option [ngValue]="m.id">{{ m.nombre }}</option> }
-          </select>
+        <div>
+          <span class="form-label" id="m-modalidad-etq">Modalidad <small class="text-muted fw-normal">(elige una)</small></span>
+          <div class="modalidades" role="radiogroup" aria-labelledby="m-modalidad-etq">
+            @for (m of delitoElegido()!.modalidades; track m.id) {
+              <button
+                type="button"
+                role="radio"
+                class="modalidades__op"
+                [class.modalidades__op--activa]="delitoValor().modalidadId === m.id"
+                [attr.aria-checked]="delitoValor().modalidadId === m.id"
+                (click)="nuevoDelito.controls.modalidadId.setValue(m.id)"
+              >
+                <span class="modalidades__marca">@if (delitoValor().modalidadId === m.id) { <app-icono nombre="check" /> }</span>
+                <span class="modalidades__texto">{{ m.nombre }}</span>
+              </button>
+            }
+          </div>
         </div>
       }
-      <div class="col-md-2">
-        <button type="submit" class="btn btn--primary w-100"><app-icono nombre="mas" /> Agregar</button>
+      <div class="delitos-form__accion">
+        <button type="submit" class="btn btn--primary"><app-icono nombre="mas" /> Agregar delito</button>
       </div>
     </form>
 
-    <div class="tabla-scroll mt-3">
-      <table class="tabla">
-        <thead><tr><th>Delito / modalidad</th><th class="text-end">Quitar</th></tr></thead>
-        <tbody>
-          @for (d of carpetas()[carpetaDelitos()!].delitos; track d.texto; let j = $index) {
-            <tr>
-              <td>{{ d.texto }}</td>
-              <td class="text-end">
-                <button type="button" class="icono-btn icono-btn--peligro" (click)="quitarDelito(j)" aria-label="Quitar delito"><app-icono nombre="basura" /></button>
-              </td>
-            </tr>
-          } @empty {
-            <tr><td colspan="2" class="hint">Sin delitos agregados.</td></tr>
-          }
-        </tbody>
-      </table>
+    <div class="delitos-lista">
+      <h3>Delitos agregados <span>{{ carpetas()[carpetaDelitos()!].delitos.length }}</span></h3>
+      @for (d of carpetas()[carpetaDelitos()!].delitos; track d.texto; let j = $index) {
+        <div class="delitos-lista__item">
+          <span class="delitos-lista__texto">{{ d.texto }}</span>
+          <button type="button" class="icono-btn icono-btn--peligro" (click)="quitarDelito(j)" aria-label="Quitar delito"><app-icono nombre="basura" /></button>
+        </div>
+      } @empty {
+        <p class="delitos-lista__vacio">Aún no has agregado delitos a esta carpeta.</p>
+      }
     </div>
 
     <ng-container modal-pie>

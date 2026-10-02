@@ -1,5 +1,4 @@
 import { Component, ElementRef, computed, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -16,7 +15,6 @@ import { abrirArchivo, descargarBlob } from '../../../shared/archivos';
 import { Icono } from '../../../shared/icono/icono';
 import { SuspensionesModal } from '../../../shared/suspensiones/suspensiones-modal';
 
-const fecha = new DatePipe('es-MX');
 
 @Component({
   selector: 'app-solicitudes-lista',
@@ -47,7 +45,7 @@ export class SolicitudesLista {
   protected readonly columnas: ColDef<SolicitudListado>[];
   // Filas de alto fijo con el contenido centrado (nombres largos se cortan y muestran tooltip).
   protected readonly defaultColDef: ColDef<SolicitudListado> = {
-    cellStyle: { display: 'flex', alignItems: 'center' },
+    cellStyle: { lineHeight: '62px' },
   };
 
   constructor(
@@ -76,15 +74,8 @@ export class SolicitudesLista {
       { field: 'nus', headerName: 'NUS', width: 105, pinned: 'left', comparator: (a, b) => this.compararNus(a, b) },
       { field: 'beneficiario', headerName: 'Beneficiario', minWidth: 220, flex: 1.4, tooltipField: 'beneficiario' },
       { field: 'solicitante', headerName: 'Peticionario', minWidth: 200, flex: 1.2, tooltipField: 'solicitante' },
-      {
-        field: 'fechaRegistro',
-        headerName: 'Registro',
-        width: 145,
-        valueFormatter: (p) => fecha.transform(p.value, 'dd/MM/yyyy HH:mm') ?? '',
-        getQuickFilterText: (p) => fecha.transform(p.value, 'dd/MM/yyyy') ?? '',
-      },
-      { field: 'estatus', headerName: 'Estatus', width: 200, cellRenderer: EstatusCeldaComponent },
-      { field: 'semaforo', headerName: 'Semáforo', width: 105, cellRenderer: SemaforoCeldaComponent, sortable: false, filter: false },
+      { field: 'estatus', headerName: 'Estatus', width: 200, cellStyle: { display: 'flex', justifyContent: 'center' }, cellRenderer: EstatusCeldaComponent },
+      { field: 'semaforo', headerName: 'Semáforo', width: 105, cellStyle: { display: 'flex', justifyContent: 'center', alignItems: 'center' }, cellRenderer: SemaforoCeldaComponent, sortable: false, filter: false },
       {
         headerName: 'Acciones',
         width: legislativo ? 190 : 110,
@@ -92,6 +83,7 @@ export class SolicitudesLista {
         sortable: false,
         filter: false,
         resizable: false,
+        cellStyle: { display: 'flex', justifyContent: 'center', alignItems: 'center' },
         cellRenderer: AccionesCeldaComponent,
         cellRendererParams: { acciones },
       },
