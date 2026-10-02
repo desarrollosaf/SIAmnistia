@@ -19,7 +19,7 @@ interface FilaConEstatus {
     }
   `,
   styles: [`
-    :host { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: .2rem; height: 100%; }
+    :host { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; line-height: 1.25; height: 100%; }
     small { font-size: .68rem; font-weight: 700; color: var(--brand-blue); }
     small.pendiente { color: var(--brand-danger); }
   `],

@@ -153,7 +153,7 @@ export class Registro {
   private readonly peticionarioValor = signal(this.peticionario.getRawValue());
   private readonly beneficiarioValor = signal(this.beneficiario.getRawValue());
   private readonly solicitudValor = signal(this.solicitud.getRawValue());
-  private readonly delitoValor = signal(this.nuevoDelito.getRawValue());
+  protected readonly delitoValor = signal(this.nuevoDelito.getRawValue());
   protected readonly conoceUbicacion = signal(false);
 
   protected readonly esFisica = computed(() => this.nombreDe(this.catalogos()?.tiposSolicitante, this.peticionarioValor().tipoSolicitanteId).toUpperCase().startsWith('F'));
