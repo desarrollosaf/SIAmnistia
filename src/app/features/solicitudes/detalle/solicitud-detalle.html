@@ -1,0 +1,208 @@
+<section class="pagina">
+  <a class="volver" routerLink="/solicitudes"><app-icono nombre="flechaIzq" /> Solicitudes</a>
+
+  @if (error()) {
+    <div class="panel"><p class="hint hint--error">{{ error() }}</p></div>
+  } @else if (!solicitud()) {
+    <div class="panel"><p class="hint">Cargando solicitud…</p></div>
+  } @else {
+    @let s = solicitud()!;
+
+    <header class="cabecera panel">
+      <div class="cabecera__datos">
+        <span class="cabecera__eyebrow">Número único de solicitud</span>
+        <h1>{{ s.nus }}</h1>
+        <div class="cabecera__meta">
+          <span [class]="claseEstatus(s.estatus)">{{ s.estatus }}</span>
+          @if (s.miTurno) {
+            <span [class]="claseEstatus(s.miTurno.estatus)">Mi turno: {{ s.miTurno.estatus }}</span>
+          }
+          <span><app-icono nombre="reloj" /> Registrada {{ s.fechaRegistro | date: 'dd/MM/yyyy HH:mm' }}</span>
+          @if (s.fechaAprobacion) {
+            <span><app-icono nombre="check" /> Aceptada {{ s.fechaAprobacion | date: 'dd/MM/yyyy' }}</span>
+          }
+          @if (s.recomendacion) {
+            <span><app-icono nombre="balanza" /> {{ s.recomendacion }}</span>
+          }
+        </div>
+      </div>
+
+      @if (hayAcciones() || s.acciones.editar) {
+        <div class="cabecera__acciones">
+          @if (s.acciones.editar) {
+            <button type="button" class="btn btn--outline" (click)="editando.set(true)"><app-icono nombre="lapiz" /> Editar datos</button>
+          }
+          @if (s.acciones.negar) {
+            <button type="button" class="btn btn--danger" (click)="abrirAccion('negar')"><app-icono nombre="cruzCirculo" /> Negar</button>
+          }
+          @if (s.acciones.aceptar) {
+            <button type="button" class="btn btn--success" (click)="aceptar()"><app-icono nombre="check" /> Aceptar</button>
+          }
+          @if (s.acciones.resolver) {
+            <button type="button" class="btn btn--primary" (click)="abrirAccion('resolver')"><app-icono nombre="balanza" /> Terminar con resolución</button>
+          }
+          @if (s.acciones.indicarRecepcion) {
+            <button type="button" class="btn btn--primary" (click)="indicarRecepcion()"><app-icono nombre="check" /> Indicar recepción</button>
+          }
+          @if (s.acciones.prevenir) {
+            <button type="button" class="btn btn--outline" (click)="abrirAccion('prevenir')"><app-icono nombre="alerta" /> Prevención</button>
+          }
+          @if (s.acciones.opinar) {
+            <button type="button" class="btn btn--primary" (click)="abrirAccion('opinar')"><app-icono nombre="checkCirculo" /> Emitir opinión</button>
+          }
+          @if (s.acciones.concluir) {
+            <button type="button" class="btn btn--primary" (click)="abrirAccion('concluir')"><app-icono nombre="escudo" /> Concluir</button>
+          }
+        </div>
+      }
+    </header>
+
+    @if (s.acciones.indicarRecepcion) {
+      <div class="aviso-turno">
+        <app-icono nombre="info" />
+        <p>Esta solicitud se turnó a tu institución. Indica su recepción; si no lo haces, se tendrá por recibida al cumplirse <strong>72 horas</strong> desde el turno.</p>
+      </div>
+    }
+
+    <nav class="pestanas" role="tablist">
+      @for (p of pestanas(); track p.id) {
+        <button type="button" role="tab" class="pestana" [class.pestana--activa]="pestana() === p.id" [attr.aria-selected]="pestana() === p.id" (click)="pestana.set(p.id)">
+          <app-icono [nombre]="p.icono" /> {{ p.label }}
+        </button>
+      }
+    </nav>
+
+    @switch (pestana()) {
+      @case ('resumen') {
+        <div class="panel">
+          <h2 class="panel__titulo"><app-icono nombre="personas" /> Beneficiario</h2>
+          <dl class="datos">
+            <div><dt>Nombre</dt><dd>{{ s.beneficiario.nombre }} {{ s.beneficiario.primerApellido }} {{ s.beneficiario.segundoApellido }}</dd></div>
+            <div><dt>CURP</dt><dd>{{ s.beneficiario.curp || '—' }}</dd></div>
+            <div><dt>Fecha de nacimiento</dt><dd>{{ s.beneficiario.fechaNacimiento ? (s.beneficiario.fechaNacimiento | date: 'dd/MM/yyyy') : '—' }}</dd></div>
+            <div><dt>Género</dt><dd>{{ s.beneficiario.genero || '—' }}</dd></div>
+          </dl>
+        </div>
+        <div class="panel">
+          <h2 class="panel__titulo"><app-icono nombre="balanza" /> Detalles de la solicitud</h2>
+          <dl class="datos">
+            <div><dt>CPRS</dt><dd>{{ s.detalle.cprs }}</dd></div>
+            <div><dt>Situación jurídica</dt><dd>{{ s.detalle.situacionJuridica }}</dd></div>
+            <div><dt>Tipo de defensor</dt><dd>{{ s.detalle.tipoDefensor }}</dd></div>
+            <div><dt>Juzgado</dt><dd>{{ s.detalle.juzgado }}</dd></div>
+            <div><dt>Perfil criminológico</dt><dd>{{ s.detalle.perfilCriminologico }}</dd></div>
+            <div><dt>Nivel del delito</dt><dd>{{ s.detalle.nivelDelito || '—' }}</dd></div>
+            <div><dt>Procedimiento abreviado</dt><dd>{{ s.detalle.procedimientoAbreviado ? 'Sí' : 'No' }}</dd></div>
+          </dl>
+        </div>
+        @if (s.detalle.observacionesHechos || s.detalle.informacionComplementaria) {
+          <div class="panel">
+            <h2 class="panel__titulo"><app-icono nombre="nota" /> Narrativa del peticionario</h2>
+            @if (s.detalle.observacionesHechos) {
+              <h3 class="subtitulo">Narrativa de los hechos</h3>
+              <div class="narrativa" [innerHTML]="s.detalle.observacionesHechos"></div>
+            }
+            @if (s.detalle.informacionComplementaria) {
+              <h3 class="subtitulo">Información adicional</h3>
+              <div class="narrativa" [innerHTML]="s.detalle.informacionComplementaria"></div>
+            }
+          </div>
+        }
+      }
+
+      @case ('peticionario') {
+        <div class="panel">
+          <h2 class="panel__titulo"><app-icono nombre="persona" /> {{ s.solicitante.personaFisica ? 'Persona física' : 'Persona jurídica colectiva' }}</h2>
+          <dl class="datos">
+            <div><dt>{{ s.solicitante.personaFisica ? 'Nombre' : 'Institución u organismo' }}</dt><dd>{{ s.solicitante.nombre }} {{ s.solicitante.primerApellido }} {{ s.solicitante.segundoApellido }}</dd></div>
+            @if (s.solicitante.personaFisica) {
+              <div><dt>Género</dt><dd>{{ s.solicitante.genero || '—' }}</dd></div>
+              <div><dt>Parentesco con el beneficiario</dt><dd>{{ s.solicitante.parentesco || 'Sin relación' }}</dd></div>
+            } @else {
+              <div><dt>RFC</dt><dd>{{ s.solicitante.rfc || '—' }}</dd></div>
+            }
+          </dl>
+        </div>
+        <div class="panel">
+          <h2 class="panel__titulo"><app-icono nombre="telefono" /> Contacto</h2>
+          <dl class="datos">
+            <div><dt>Correo electrónico</dt><dd>{{ s.solicitante.email || '—' }}</dd></div>
+            <div><dt>Teléfono</dt><dd>{{ s.solicitante.telefono || '—' }}</dd></div>
+            <div><dt>Celular</dt><dd>{{ s.solicitante.celular || '—' }}</dd></div>
+          </dl>
+        </div>
+        <div class="panel">
+          <h2 class="panel__titulo"><app-icono nombre="casa" /> Domicilio</h2>
+          @if (s.solicitante.domicilio; as d) {
+            <dl class="datos">
+              <div><dt>Calle y número</dt><dd>{{ d.calle }} {{ d.numExt }}{{ d.numInt ? ' INT. ' + d.numInt : '' }}</dd></div>
+              <div><dt>Colonia</dt><dd>{{ d.colonia || '—' }}</dd></div>
+              <div><dt>Municipio</dt><dd>{{ d.municipio || '—' }}</dd></div>
+              <div><dt>Entidad</dt><dd>{{ d.entidad || '—' }}</dd></div>
+            </dl>
+          } @else {
+            <p class="hint">Sin domicilio registrado.</p>
+          }
+        </div>
+      }
+
+      @case ('carpetas') {
+        <div class="carpetas">
+          @for (c of s.carpetas; track c.id) {
+            <article class="panel carpeta">
+              <header>
+                <span class="carpeta__icono"><app-icono nombre="carpeta" /></span>
+                <div>
+                  <h2>{{ c.carpeta }}</h2>
+                  <p>{{ c.razon }}@if (c.tomo || c.foja) { · Tomo {{ c.tomo || '—' }}, foja {{ c.foja || '—' }} }</p>
+                </div>
+              </header>
+              <ul>
+                @for (d of c.delitos; track d.id) {
+                  <li><app-icono nombre="martillo" /> {{ d.delito }}</li>
+                } @empty {
+                  <li class="hint">Sin delitos registrados.</li>
+                }
+              </ul>
+            </article>
+          } @empty {
+            <div class="panel"><p class="hint">La solicitud no tiene carpetas registradas.</p></div>
+          }
+        </div>
+      }
+
+      @case ('turnos') {
+        <app-turnos-tab [solicitudId]="s.id" [puedeTurnar]="s.acciones.turnar" [legislativo]="s.acciones.editar" (cambio)="cargar()" />
+      }
+
+      @case ('documentos') {
+        <app-documentos-tab [solicitudId]="s.id" />
+      }
+    }
+  }
+</section>
+
+@if (configAccion(); as cfg) {
+  <app-modal [titulo]="cfg.titulo" [subtitulo]="'Solicitud ' + solicitud()?.nus" [icono]="cfg.icono" (cerrar)="accion.set(null)">
+    <p class="hint mb-3">{{ cfg.descripcion }}</p>
+    @if (accion() === 'resolver') {
+      <label class="form-label" for="recomendacion">Tipo de resolución <span class="req">*</span></label>
+      <select id="recomendacion" class="form-select mb-3" [(ngModel)]="recomendacionId">
+        <option [ngValue]="0">Selecciona una opción</option>
+        @for (r of recomendaciones(); track r.id) { <option [ngValue]="r.id">{{ r.nombre }}</option> }
+      </select>
+    }
+    <span class="form-label d-block">Documento (PDF) <span class="req">*</span></span>
+    <app-archivo-pdf [(archivo)]="archivoAccion" />
+    <ng-container modal-pie>
+      <button type="button" class="btn btn--outline" (click)="accion.set(null)">Cancelar</button>
+      <button type="button" class="btn btn--primary" (click)="ejecutarAccion()" [disabled]="procesando()">
+        @if (procesando()) { <span class="spinner"></span> } {{ cfg.boton }}
+      </button>
+    </ng-container>
+  </app-modal>
+}
+
+@if (editando() && solicitud()) {
+  <app-editar-solicitud [solicitud]="solicitud()!" (cerrar)="editando.set(false)" (guardado)="alGuardarEdicion()" />
+}

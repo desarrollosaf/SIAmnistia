@@ -1,0 +1,89 @@
+<section class="pagina">
+  <header class="pagina__encabezado">
+    <div>
+      <h1>Solicitudes</h1>
+      <p>{{ esLegislativo() ? 'Solicitudes de amnistía registradas.' : 'Solicitudes turnadas a tu institución para opinión consultiva.' }}</p>
+    </div>
+    @if (esLegislativo()) {
+      <div class="pagina__acciones">
+        <button type="button" class="btn btn--outline" (click)="descargarExcel()" [disabled]="descargando()">
+          @if (descargando()) { <span class="spinner spinner--oscuro"></span> } @else { <app-icono nombre="excel" /> }
+          Descargar Excel
+        </button>
+      </div>
+    }
+  </header>
+
+  <nav class="filtros" aria-label="Filtrar por estatus">
+    @for (f of filtros(); track f.id) {
+      <button type="button" class="filtro" [class.filtro--activo]="filtro() === f.id" [attr.aria-pressed]="filtro() === f.id" (click)="filtrar(f.id)">
+        {{ f.nombre }}
+        @if (f.total !== null) { <span class="filtro__total">{{ f.total }}</span> }
+      </button>
+    }
+  </nav>
+
+  <div class="panel">
+    <div class="tabla-header">
+      <div class="tabla-header__titulo">
+        <h2>Listado</h2>
+        @if (!cargando() && !error()) {
+          <p>{{ solicitudes().length }} {{ solicitudes().length === 1 ? 'solicitud' : 'solicitudes' }}</p>
+        }
+      </div>
+      <div class="tabla-header__busqueda">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8" />
+          <path d="m20 20-3.2-3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+        <input type="text" placeholder="Buscar por NUS, beneficiario, peticionario…" [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)" />
+        @if (busqueda()) {
+          <button type="button" class="limpiar-busqueda" (click)="busqueda.set('')" aria-label="Limpiar búsqueda">✕</button>
+        }
+      </div>
+    </div>
+
+    @if (cargando()) {
+      <div class="tabla-skeleton">
+        <div class="tabla-skeleton__header"></div>
+        @for (n of [1, 2, 3, 4, 5, 6]; track n) {
+          <div class="tabla-skeleton__row"></div>
+        }
+      </div>
+    } @else if (error()) {
+      <p class="hint hint--error">{{ error() }}</p>
+    } @else if (solicitudes().length === 0) {
+      <p class="hint">No hay solicitudes con este filtro.</p>
+    } @else {
+      <ag-grid-angular
+        class="grid"
+        [theme]="gridTheme"
+        [localeText]="localeText"
+        [rowData]="solicitudes()"
+        [columnDefs]="columnas"
+        [defaultColDef]="defaultColDef"
+        [rowHeight]="60"
+        [quickFilterText]="busqueda()"
+        [pagination]="true"
+        [paginationPageSize]="20"
+        [paginationPageSizeSelector]="[20, 50, 100]"
+        [domLayout]="'autoHeight'"
+        [enableCellTextSelection]="true"
+        [ensureDomOrder]="true"
+        (gridReady)="onGridReady()"
+      />
+    }
+
+    <div class="leyenda">
+      <span>Semáforo de días en evaluación:</span>
+      <span><i class="punto punto--amarillo"></i> hasta 20</span>
+      <span><i class="punto punto--naranja"></i> 21 a 40</span>
+      <span><i class="punto punto--rojo"></i> más de 40</span>
+      <span><i class="punto punto--verde"></i> atendida</span>
+    </div>
+  </div>
+</section>
+
+@if (suspension(); as s) {
+  <app-suspensiones-modal tipo="solicitud" [registroId]="s.id" [titulo]="'Solicitud ' + s.nus" (cerrar)="suspension.set(null)" />
+}

@@ -1,0 +1,84 @@
+.tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 1.25rem;
+  border: 1px solid var(--brand-border);
+  border-radius: 16px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+
+  &:hover { transform: translateY(-2px); border-color: var(--brand-primary); box-shadow: 0 14px 30px rgba(150, 0, 72, 0.12); }
+
+  &__nus { font-size: 1.05rem; font-weight: 800; color: var(--brand-ink); }
+
+  dl { display: grid; gap: 0.45rem; margin: 0.25rem 0 0; width: 100%; }
+  dt { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--brand-muted); }
+  dd { margin: 0; font-size: 0.88rem; font-weight: 600; }
+
+  &__ver { display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.25rem; font-size: 0.82rem; font-weight: 700; color: var(--brand-primary); }
+}
+
+.expirada {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+
+  app-icono { width: 36px; height: 36px; color: var(--brand-amber); }
+  p { margin: 0; }
+}
+
+.linea-tiempo {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    position: relative;
+    display: flex;
+    gap: 0.9rem;
+    padding-bottom: 1.2rem;
+
+    &:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 17px;
+      top: 36px;
+      bottom: 0;
+      width: 2px;
+      background: var(--brand-border);
+    }
+  }
+
+  &__punto {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--brand-bg);
+    color: var(--brand-muted);
+  }
+
+  li[data-tono='ok'] .linea-tiempo__punto { background: #e6f5ec; color: #1a8a4a; }
+  li[data-tono='proceso'] .linea-tiempo__punto { background: #fff4e0; color: var(--brand-amber); }
+  li[data-tono='error'] .linea-tiempo__punto { background: var(--brand-danger-bg); color: var(--brand-danger); }
+
+  strong { display: block; font-size: 0.92rem; }
+  p { margin: 0.1rem 0; font-size: 0.85rem; color: var(--brand-muted); }
+  small { font-size: 0.76rem; color: var(--brand-muted); }
+}

@@ -1,0 +1,162 @@
+[
+  {
+    "cve_agee": "01",
+    "nom_agee": "Aguascalientes",
+    "abrev_agee": "Ags."
+  },
+  {
+    "cve_agee": "02",
+    "nom_agee": "Baja California",
+    "abrev_agee": "BC"
+  },
+  {
+    "cve_agee": "03",
+    "nom_agee": "Baja California Sur",
+    "abrev_agee": "BCS"
+  },
+  {
+    "cve_agee": "04",
+    "nom_agee": "Campeche",
+    "abrev_agee": "Camp."
+  },
+  {
+    "cve_agee": "05",
+    "nom_agee": "Coahuila de Zaragoza",
+    "abrev_agee": "Coah."
+  },
+  {
+    "cve_agee": "06",
+    "nom_agee": "Colima",
+    "abrev_agee": "Col."
+  },
+  {
+    "cve_agee": "07",
+    "nom_agee": "Chiapas",
+    "abrev_agee": "Chis."
+  },
+  {
+    "cve_agee": "08",
+    "nom_agee": "Chihuahua",
+    "abrev_agee": "Chih."
+  },
+  {
+    "cve_agee": "09",
+    "nom_agee": "Ciudad de México",
+    "abrev_agee": "CDMX"
+  },
+  {
+    "cve_agee": "10",
+    "nom_agee": "Durango",
+    "abrev_agee": "Dgo."
+  },
+  {
+    "cve_agee": "11",
+    "nom_agee": "Guanajuato",
+    "abrev_agee": "Gto."
+  },
+  {
+    "cve_agee": "12",
+    "nom_agee": "Guerrero",
+    "abrev_agee": "Gro."
+  },
+  {
+    "cve_agee": "13",
+    "nom_agee": "Hidalgo",
+    "abrev_agee": "Hgo."
+  },
+  {
+    "cve_agee": "14",
+    "nom_agee": "Jalisco",
+    "abrev_agee": "Jal."
+  },
+  {
+    "cve_agee": "15",
+    "nom_agee": "México",
+    "abrev_agee": "Mex."
+  },
+  {
+    "cve_agee": "16",
+    "nom_agee": "Michoacan",
+    "abrev_agee": "Mich."
+  },
+  {
+    "cve_agee": "17",
+    "nom_agee": "Morelos",
+    "abrev_agee": "Mor."
+  },
+  {
+    "cve_agee": "18",
+    "nom_agee": "Nayarit",
+    "abrev_agee": "Nay."
+  },
+  {
+    "cve_agee": "19",
+    "nom_agee": "Nuevo Leon",
+    "abrev_agee": "NL"
+  },
+  {
+    "cve_agee": "20",
+    "nom_agee": "Oaxaca",
+    "abrev_agee": "Oax."
+  },
+  {
+    "cve_agee": "21",
+    "nom_agee": "Puebla",
+    "abrev_agee": "Pue."
+  },
+  {
+    "cve_agee": "22",
+    "nom_agee": "Queretaro",
+    "abrev_agee": "Qro."
+  },
+  {
+    "cve_agee": "23",
+    "nom_agee": "Quintana Roo",
+    "abrev_agee": "Q. Roo"
+  },
+  {
+    "cve_agee": "24",
+    "nom_agee": "San Luis Potosi",
+    "abrev_agee": "SLP"
+  },
+  {
+    "cve_agee": "25",
+    "nom_agee": "Sinaloa",
+    "abrev_agee": "Sin."
+  },
+  {
+    "cve_agee": "26",
+    "nom_agee": "Sonora",
+    "abrev_agee": "Son."
+  },
+  {
+    "cve_agee": "27",
+    "nom_agee": "Tabasco",
+    "abrev_agee": "Tab."
+  },
+  {
+    "cve_agee": "28",
+    "nom_agee": "Tamaulipas",
+    "abrev_agee": "Tamps."
+  },
+  {
+    "cve_agee": "29",
+    "nom_agee": "Tlaxcala",
+    "abrev_agee": "Tlax."
+  },
+  {
+    "cve_agee": "30",
+    "nom_agee": "Veracruz de Ignacio de la Llave",
+    "abrev_agee": "Ver."
+  },
+  {
+    "cve_agee": "31",
+    "nom_agee": "Yucatan",
+    "abrev_agee": "Yuc."
+  },
+  {
+    "cve_agee": "32",
+    "nom_agee": "Zacatecas",
+    "abrev_agee": "Zac."
+  }
+]

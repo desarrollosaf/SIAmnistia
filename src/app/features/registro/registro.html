@@ -1,0 +1,502 @@
+<section class="hero">
+  <div class="hero__texto">
+    <span class="hero__eyebrow">Comisión Especial en Materia de Amnistía</span>
+    <h1>Solicitud de Amnistía</h1>
+    <p class="hero__lead">
+      Registra tu caso para que la Comisión solicite la opinión de las instancias de justicia y derechos humanos del
+      Estado de México. Una vez admitida tu petición y cumplidos los requisitos, se enviará una opinión consultiva al
+      Poder Judicial, cuyo juez competente determinará la procedencia de la amnistía.
+    </p>
+    <div class="aviso">
+      <app-icono nombre="alerta" />
+      <p>La recepción de tu solicitud <strong>no implica</strong> el otorgamiento de la amnistía. El proceso puede tomar más de <strong>90 días hábiles</strong>.</p>
+    </div>
+    <ol class="hero__pasos">
+      <li><span>1</span><div><strong>Llena el formulario</strong><small>7 pasos con tus datos y documentos en PDF</small></div></li>
+      <li><span>2</span><div><strong>Recibe tu acuse</strong><small>Se envía automáticamente a tu correo</small></div></li>
+      <li><span>3</span><div><strong>Da seguimiento</strong><small>En <a routerLink="/consulta">Consultar solicitud</a> con tu correo</small></div></li>
+    </ol>
+  </div>
+  <div class="hero__video">
+    <iframe
+      src="https://www.youtube-nocookie.com/embed/JCnPjaTt1uo?start=99"
+      title="Guía del proceso de amnistía"
+      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+      loading="lazy"
+    ></iframe>
+  </div>
+</section>
+
+<section class="consentimiento panel">
+  <p>Antes de comenzar, ten a la mano tus datos y los documentos en PDF: identificación oficial, CURP del beneficiario y, en su caso, acta de nacimiento y sentencia.</p>
+  <label class="form-check">
+    <input class="form-check-input" type="checkbox" [checked]="aceptaPrivacidad()" (change)="aceptaPrivacidad.set($any($event.target).checked)" />
+    <span class="form-check-label">Acepto el <a href="assets/aviso-privacidad.pdf" target="_blank" rel="noopener">aviso de privacidad</a> y el uso de la información.</span>
+  </label>
+  <label class="form-check">
+    <input class="form-check-input" type="checkbox" [checked]="aceptaLey()" (change)="aceptaLey.set($any($event.target).checked)" />
+    <span class="form-check-label">Declaro que esta solicitud corresponde a la Ley de Amnistía del Estado de México.</span>
+  </label>
+</section>
+
+@if (iniciado()) {
+  <section class="asistente" id="formulario">
+    <!-- Línea de tiempo -->
+    <nav class="linea" aria-label="Pasos de la solicitud">
+      <ol>
+        @for (p of pasos; track p.corto; let i = $index) {
+          <li [class.hecho]="i < paso()" [class.actual]="i === paso()">
+            <button type="button" (click)="irA(i)" [disabled]="i > maxAlcanzado()" [attr.aria-current]="i === paso() ? 'step' : null">
+              <span class="linea__punto">
+                @if (i < paso()) { <app-icono nombre="check" [grosor]="2.4" /> } @else { <app-icono [nombre]="p.icono" /> }
+              </span>
+              <span class="linea__texto">{{ p.corto }}</span>
+            </button>
+          </li>
+        }
+      </ol>
+      <div class="linea__meta">
+        <span>Paso <strong>{{ paso() + 1 }}</strong> de {{ pasos.length }} · {{ pasos[paso()].titulo }}</span>
+        <div class="linea__barra"><span [style.width.%]="progresoPorcentaje()"></span></div>
+      </div>
+    </nav>
+
+    <div class="panel paso">
+      <header class="paso__encabezado">
+        <span class="paso__icono"><app-icono [nombre]="pasos[paso()].icono" /></span>
+        <h2>{{ pasos[paso()].titulo }}</h2>
+        <button type="button" class="paso__ayuda" (click)="ayuda.set(paso())"><app-icono nombre="ayuda" /> Ayuda</button>
+      </header>
+
+      <!-- Paso 1: Peticionario -->
+      <form [formGroup]="peticionario" [hidden]="paso() !== 0" (submit)="$event.preventDefault()">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="tipo">Tipo de persona <span class="req">*</span></label>
+            <select id="tipo" class="form-select" formControlName="tipoSolicitanteId" [class.is-invalid]="invalido(peticionario.controls.tipoSolicitanteId)">
+              <option [ngValue]="0">Selecciona una opción</option>
+              @for (o of catalogos()?.tiposSolicitante ?? []; track o.id) { <option [ngValue]="o.id">{{ o.nombre }}</option> }
+            </select>
+            <div class="form-text">Persona física o jurídica colectiva (institución u organismo)</div>
+          </div>
+        </div>
+
+        @if (tipoElegido()) {
+          @if (esFisica()) {
+            <div class="row g-3 mt-1">
+              <div class="col-md-4">
+                <label class="form-label" for="p-nombre">Nombre(s) <span class="req">*</span></label>
+                <input id="p-nombre" class="form-control mayusculas" formControlName="nombre" maxlength="48" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="p-pa">Primer apellido <span class="req">*</span></label>
+                <input id="p-pa" class="form-control mayusculas" formControlName="primerApellido" maxlength="48" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="p-sa">Segundo apellido</label>
+                <input id="p-sa" class="form-control mayusculas" formControlName="segundoApellido" maxlength="48" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="p-genero">Género <span class="req">*</span></label>
+                <select id="p-genero" class="form-select" formControlName="generoId">
+                  <option [ngValue]="0">Selecciona una opción</option>
+                  @for (o of catalogos()?.generos ?? []; track o.id) { <option [ngValue]="o.id">{{ o.nombre }}</option> }
+                </select>
+              </div>
+              @if (generoOtroPeticionario()) {
+                <div class="col-md-4">
+                  <label class="form-label" for="p-genero-otro">¿Cuál género? <span class="req">*</span></label>
+                  <input id="p-genero-otro" class="form-control mayusculas" formControlName="generoOtro" maxlength="100" />
+                </div>
+              }
+              <div class="col-12">
+                <label class="form-check">
+                  <input class="form-check-input" type="checkbox" formControlName="relacion" />
+                  <span class="form-check-label">Tengo relación o parentesco con el beneficiario</span>
+                </label>
+              </div>
+              @if (relacion()) {
+                <div class="col-md-4">
+                  <label class="form-label" for="p-parentesco">Parentesco o relación <span class="req">*</span></label>
+                  <select id="p-parentesco" class="form-select" formControlName="parentescoId">
+                    <option [ngValue]="0">Selecciona una opción</option>
+                    @for (o of catalogos()?.parentescos ?? []; track o.id) { <option [ngValue]="o.id">{{ o.nombre }}</option> }
+                  </select>
+                </div>
+                @if (parentescoOtro()) {
+                  <div class="col-md-4">
+                    <label class="form-label" for="p-parentesco-otro">Especifica el parentesco <span class="req">*</span></label>
+                    <input id="p-parentesco-otro" class="form-control mayusculas" formControlName="parentescoOtro" maxlength="48" />
+                  </div>
+                }
+                <div class="col-md-4">
+                  <span class="form-label d-block">Acta de nacimiento (PDF) <span class="req">*</span></span>
+                  <app-archivo-pdf [(archivo)]="acta" [invalido]="intentoPaso().includes(0)" />
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="row g-3 mt-1">
+              <div class="col-md-8">
+                <label class="form-label" for="p-inst">Nombre de la institución u organismo <span class="req">*</span></label>
+                <input id="p-inst" class="form-control mayusculas" formControlName="nombreInstitucion" maxlength="191" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="p-rfc">RFC <span class="req">*</span></label>
+                <input id="p-rfc" class="form-control mayusculas" formControlName="rfc" minlength="9" maxlength="13" />
+              </div>
+            </div>
+          }
+          <div class="row g-3 mt-1">
+            <div class="col-md-6">
+              <span class="form-label d-block">Identificación oficial / poder notarial (PDF) <span class="req">*</span></span>
+              <app-archivo-pdf [(archivo)]="identificacion" [invalido]="intentoPaso().includes(0)" />
+            </div>
+          </div>
+        }
+      </form>
+
+      <!-- Paso 2: Domicilio -->
+      <form [formGroup]="domicilio" [hidden]="paso() !== 1" (submit)="$event.preventDefault()">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="d-calle">Calle <span class="req">*</span></label>
+            <input id="d-calle" class="form-control mayusculas" formControlName="calle" maxlength="191" [class.is-invalid]="invalido(domicilio.controls.calle)" />
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="d-ext">Núm. exterior <span class="req">*</span></label>
+            <input id="d-ext" class="form-control mayusculas" formControlName="numExt" maxlength="10" [class.is-invalid]="invalido(domicilio.controls.numExt)" />
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="d-int">Núm. interior</label>
+            <input id="d-int" class="form-control mayusculas" formControlName="numInt" maxlength="10" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="d-colonia">Colonia <span class="req">*</span></label>
+            <input id="d-colonia" class="form-control mayusculas" formControlName="colonia" maxlength="191" [class.is-invalid]="invalido(domicilio.controls.colonia)" />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="d-cp">Código postal</label>
+            <input id="d-cp" class="form-control" formControlName="codigoPostal" maxlength="5" inputmode="numeric" [class.is-invalid]="invalido(domicilio.controls.codigoPostal)" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="d-entidad">Entidad federativa <span class="req">*</span></label>
+            <select id="d-entidad" class="form-select" formControlName="entidadId" [class.is-invalid]="invalido(domicilio.controls.entidadId)">
+              <option [ngValue]="0">Selecciona una opción</option>
+              @for (o of catalogos()?.entidades ?? []; track o.id) { <option [ngValue]="o.id">{{ o.nombre }}</option> }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="d-municipio">Municipio o alcaldía <span class="req">*</span></label>
+            <select id="d-municipio" class="form-select" formControlName="municipioId" [class.is-invalid]="invalido(domicilio.controls.municipioId)">
+              <option [ngValue]="0">{{ municipios().length ? 'Selecciona una opción' : 'Primero elige la entidad' }}</option>
+              @for (o of municipios(); track o.id) { <option [ngValue]="o.id">{{ o.nombre }}</option> }
+            </select>
+          </div>
+        </div>
+      </form>
+
+      <!-- Paso 3: Contacto -->
+      <form [formGroup]="contacto" [hidden]="paso() !== 2" (submit)="$event.preventDefault()">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="c-email">Correo electrónico <span class="req">*</span></label>
+            <input id="c-email" type="email" class="form-control" formControlName="email" placeholder="ejemplo@correo.com" [class.is-invalid]="invalido(contacto.controls.email)" />
+            <div class="form-text">Aquí recibirás tu acuse y con él consultarás tu solicitud.</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="c-tel">Teléfono <span class="req">*</span></label>
+            <input id="c-tel" class="form-control" formControlName="telefono" maxlength="10" inputmode="numeric" placeholder="10 dígitos" [class.is-invalid]="invalido(contacto.controls.telefono)" />
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="c-cel">Celular <span class="req">*</span></label>
+            <input id="c-cel" class="form-control" formControlName="celular" maxlength="10" inputmode="numeric" placeholder="10 dígitos" [class.is-invalid]="invalido(contacto.controls.celular)" />
+          </div>
+        </div>
+      </form>
+
+      <!-- Paso 4: Beneficiario -->
+      <form [formGroup]="beneficiario" [hidden]="paso() !== 3" (submit)="$event.preventDefault()">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" for="b-nombre">Nombre(s) <span class="req">*</span></label>
+            <input id="b-nombre" class="form-control mayusculas" formControlName="nombre" maxlength="48" [class.is-invalid]="invalido(beneficiario.controls.nombre)" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="b-pa">Primer apellido <span class="req">*</span></label>
+            <input id="b-pa" class="form-control mayusculas" formControlName="primerApellido" maxlength="48" [class.is-invalid]="invalido(beneficiario.controls.primerApellido)" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="b-sa">Segundo apellido</label>
+            <input id="b-sa" class="form-control mayusculas" formControlName="segundoApellido" maxlength="48" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="b-fecha">Fecha de nacimiento <span class="req">*</span></label>
+            <input id="b-fecha" type="date" class="form-control" formControlName="fechaNacimiento" [min]="fechaMin" [max]="fechaMax" [class.is-invalid]="invalido(beneficiario.controls.fechaNacimiento)" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="b-genero">Género <span class="req">*</span></label>
+            <select id="b-genero" class="form-select" formControlName="generoId" [class.is-invalid]="invalido(beneficiario.controls.generoId)">
+              <option [ngValue]="0">Selecciona una opción</option>
+              @for (o of catalogos()?.generos ?? []; track o.id) { <option [ngValue]="o.id">{{ o.nombre }}</option> }
+            </select>
+          </div>
+          @if (generoOtroBeneficiario()) {
+            <div class="col-md-4">
+              <label class="form-label" for="b-genero-otro">¿Cuál género? <span class="req">*</span></label>
+              <input id="b-genero-otro" class="form-control mayusculas" formControlName="generoOtro" maxlength="100" />
+            </div>
+          }
+          <div class="col-md-4">
+            <label class="form-label" for="b-curp">CURP <span class="req">*</span></label>
+            <input id="b-curp" class="form-control mayusculas" formControlName="curp" maxlength="18" placeholder="Ej. LOMP850101HMCRDR09" [class.is-invalid]="invalido(beneficiario.controls.curp)" />
+            @if (invalido(beneficiario.controls.curp)) {
+              <div class="invalid-feedback d-block">CURP inválida: verifica los 18 caracteres.</div>
+            }
+          </div>
+          <div class="col-md-6">
+            <span class="form-label d-block">Constancia de CURP (PDF) <span class="req">*</span></span>
+            <app-archivo-pdf [(archivo)]="curpArchivo" [invalido]="intentoPaso().includes(3)" />
+          </div>
+        </div>
+      </form>
+
+      <!-- Paso 5: Carpetas -->
+      <div [hidden]="paso() !== 4">
+        <div class="carpetas">
+          <form class="carpetas__alta" [formGroup]="nuevaCarpeta" (ngSubmit)="agregarCarpeta()">
+            <h3><app-icono nombre="carpeta" /> Agregar carpeta</h3>
+            <div class="mb-3">
+              <label class="form-label" for="k-carpeta">Núm. de carpeta o causa <span class="req">*</span></label>
+              <input id="k-carpeta" class="form-control mayusculas" formControlName="carpeta" maxlength="191" placeholder="Folio de la carpeta" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="k-razon">Razón de la solicitud <span class="req">*</span></label>
+              <select id="k-razon" class="form-select" formControlName="razonSolicitudId">
+                <option [ngValue]="0">Selecciona una opción</option>
+                @for (o of catalogos()?.razonesSolicitud ?? []; track o.id) { <option [ngValue]="o.id">{{ o.nombre }}</option> }
+              </select>
+            </div>
+            <label class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" formControlName="conoceUbicacion" />
+              <span class="form-check-label">Conozco la ubicación de la violación en el expediente</span>
+            </label>
+            @if (conoceUbicacion()) {
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label" for="k-tomo">Tomo <span class="req">*</span></label>
+                  <input id="k-tomo" class="form-control mayusculas" formControlName="tomo" maxlength="50" />
+                </div>
+                <div class="col-6">
+                  <label class="form-label" for="k-foja">Foja <span class="req">*</span></label>
+                  <input id="k-foja" class="form-control mayusculas" formControlName="foja" maxlength="50" />
+                </div>
+              </div>
+            }
+            <button type="submit" class="btn btn--primary w-100"><app-icono nombre="mas" /> Agregar carpeta</button>
+          </form>
+
+          <div class="carpetas__lista">
+            @if (!carpetas().length) {
+              <div class="vacio">
+                <app-icono nombre="carpeta" />
+                <p>Aún no agregas carpetas. Captura la primera en el formulario.</p>
+              </div>
+            } @else {
+              @for (c of carpetas(); track c.carpeta; let i = $index) {
+                <article class="carpeta" [class.carpeta--sin-delitos]="!c.delitos.length">
+                  <header>
+                    <div>
+                      <strong>{{ c.carpeta }}</strong>
+                      <small>{{ c.razon }}@if (c.conoceUbicacion) { · Tomo {{ c.tomo }}, foja {{ c.foja }} }</small>
+                    </div>
+                    <button type="button" class="icono-btn icono-btn--peligro" (click)="quitarCarpeta(i)" aria-label="Quitar carpeta"><app-icono nombre="basura" /></button>
+                  </header>
+                  @if (c.delitos.length) {
+                    <ul>
+                      @for (d of c.delitos; track d.texto) { <li>{{ d.texto }}</li> }
+                    </ul>
+                  } @else {
+                    <p class="carpeta__aviso"><app-icono nombre="alerta" /> Agrega al menos un delito</p>
+                  }
+                  <button type="button" class="btn btn--outline btn--sm" (click)="abrirDelitos(i)">
+                    <app-icono nombre="martillo" /> Delitos ({{ c.delitos.length }})
+                  </button>
+                </article>
+              }
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Paso 6: Solicitud -->
+      <form [formGroup]="solicitud" [hidden]="paso() !== 5" (submit)="$event.preventDefault()">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="s-cprs">Centro Preventivo y de Readaptación Social <span class="req">*</span></label>
+            <input id="s-cprs" class="form-control mayusculas" formControlName="cprs" maxlength="191" [class.is-invalid]="invalido(solicitud.controls.cprs)" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="s-situacion">Situación jurídica <span class="req">*</span></label>
+            <select id="s-situacion" class="form-select" formControlName="situacionJuridicaId" [class.is-invalid]="invalido(solicitud.controls.situacionJuridicaId)">
+              <option [ngValue]="0">Selecciona una opción</option>
+              @for (o of catalogos()?.situacionesJuridicas ?? []; track o.id) { <option [ngValue]="o.id">{{ o.nombre }}</option> }
+            </select>
+          </div>
+          @if (situacion() === 'Sentenciado') {
+            <div class="col-md-6">
+              <span class="form-label d-block">Sentencia definitiva (PDF) <span class="req">*</span></span>
+              <app-archivo-pdf [(archivo)]="sentencia" [invalido]="intentoPaso().includes(5)" />
+            </div>
+          }
+          @if (situacion() === 'Otro') {
+            <div class="col-md-6">
+              <label class="form-label" for="s-otro">Especifica la situación jurídica <span class="req">*</span></label>
+              <input id="s-otro" class="form-control mayusculas" formControlName="otroSituacionJuridica" maxlength="191" />
+            </div>
+          }
+          <div class="col-md-6">
+            <label class="form-label" for="s-defensor">Tipo de defensor <span class="req">*</span></label>
+            <select id="s-defensor" class="form-select" formControlName="tipoDefensorId" [class.is-invalid]="invalido(solicitud.controls.tipoDefensorId)">
+              <option [ngValue]="0">Selecciona una opción</option>
+              @for (o of catalogos()?.tiposDefensores ?? []; track o.id) { <option [ngValue]="o.id">{{ o.nombre }}</option> }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="s-juzgado">Juzgado <span class="req">*</span></label>
+            <input id="s-juzgado" class="form-control mayusculas" formControlName="juzgado" maxlength="191" [class.is-invalid]="invalido(solicitud.controls.juzgado)" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="s-perfil">Perfil criminológico <span class="req">*</span></label>
+            <select id="s-perfil" class="form-select" formControlName="perfilCriminologicoId" [class.is-invalid]="invalido(solicitud.controls.perfilCriminologicoId)">
+              <option [ngValue]="0">Selecciona una opción</option>
+              @for (o of catalogos()?.perfilesCriminologicos ?? []; track o.id) { <option [ngValue]="o.id">{{ o.nombre }}</option> }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="s-nivel">Nivel del delito <span class="req">*</span></label>
+            <select id="s-nivel" class="form-select" formControlName="nivelDelitoId" [class.is-invalid]="invalido(solicitud.controls.nivelDelitoId)">
+              <option [ngValue]="0">Selecciona una opción</option>
+              @for (o of catalogos()?.nivelesDelito ?? []; track o.id) { <option [ngValue]="o.id">{{ o.nombre }}</option> }
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-check">
+              <input class="form-check-input" type="checkbox" formControlName="procedimientoAbreviado" />
+              <span class="form-check-label">Se trata de un procedimiento abreviado</span>
+            </label>
+          </div>
+        </div>
+      </form>
+
+      <!-- Paso 7: Narrativa -->
+      <div [hidden]="paso() !== 6">
+        <div class="row g-3">
+          <div class="col-md-7">
+            <span class="form-label d-block">Verdad de los hechos (PDF, opcional)</span>
+            <app-archivo-pdf [(archivo)]="verdadHechos" texto="Seleccionar PDF (máx. 125 MB)" />
+            <div class="form-text">PDF en escala de grises a 150 dpi con la verdad jurídica de los hechos y la justificación de la presunta violación.</div>
+          </div>
+          <div class="col-12">
+            <span class="form-label d-block">Narrativa de los hechos</span>
+            <div class="editor"><div #editorNarrativa></div></div>
+          </div>
+          <div class="col-12">
+            <span class="form-label d-block">Información adicional</span>
+            <div class="editor"><div #editorInformacion></div></div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="paso__navegacion">
+        @if (paso() > 0) {
+          <button type="button" class="btn btn--outline" (click)="anterior()" [disabled]="enviando()"><app-icono nombre="flechaIzq" /> Regresar</button>
+        } @else {
+          <span></span>
+        }
+        @if (paso() < pasos.length - 1) {
+          <button type="button" class="btn btn--primary" (click)="siguiente()">Siguiente <app-icono nombre="flechaDer" /></button>
+        } @else {
+          <button type="button" class="btn btn--primary" (click)="enviar()" [disabled]="enviando()">
+            @if (enviando()) {
+              <span class="spinner"></span> {{ progreso() < 100 ? 'Subiendo ' + progreso() + '%' : 'Generando acuse…' }}
+            } @else {
+              <app-icono nombre="enviar" /> Enviar solicitud
+            }
+          </button>
+        }
+      </footer>
+    </div>
+  </section>
+}
+
+@if (carpetaDelitos() !== null) {
+  <app-modal
+    titulo="Delitos de la carpeta"
+    [subtitulo]="carpetas()[carpetaDelitos()!].carpeta"
+    icono="martillo"
+    ancho="ancho"
+    (cerrar)="carpetaDelitos.set(null)"
+  >
+    <form class="row g-3 align-items-end" [formGroup]="nuevoDelito" (ngSubmit)="agregarDelito()">
+      <div class="col-md-5">
+        <label class="form-label" for="m-delito">Delito</label>
+        <select id="m-delito" class="form-select" formControlName="delitoId">
+          <option [ngValue]="0">Selecciona una opción</option>
+          @for (d of catalogos()?.delitos ?? []; track d.id) { <option [ngValue]="d.id">{{ d.nombre }}</option> }
+        </select>
+      </div>
+      @if (delitoEsOtro()) {
+        <div class="col-md-5">
+          <label class="form-label" for="m-otro">Nombre del delito</label>
+          <input id="m-otro" class="form-control mayusculas" formControlName="delitoOtro" maxlength="255" placeholder="Ej. DAÑO EN LOS BIENES" />
+        </div>
+      } @else if (delitoElegido()?.modalidades?.length) {
+        <div class="col-md-5">
+          <label class="form-label" for="m-modalidad">Modalidad</label>
+          <select id="m-modalidad" class="form-select" formControlName="modalidadId">
+            <option [ngValue]="0">Selecciona una opción</option>
+            @for (m of delitoElegido()!.modalidades; track m.id) { <option [ngValue]="m.id">{{ m.nombre }}</option> }
+          </select>
+        </div>
+      }
+      <div class="col-md-2">
+        <button type="submit" class="btn btn--primary w-100"><app-icono nombre="mas" /> Agregar</button>
+      </div>
+    </form>
+
+    <div class="tabla-scroll mt-3">
+      <table class="tabla">
+        <thead><tr><th>Delito / modalidad</th><th class="text-end">Quitar</th></tr></thead>
+        <tbody>
+          @for (d of carpetas()[carpetaDelitos()!].delitos; track d.texto; let j = $index) {
+            <tr>
+              <td>{{ d.texto }}</td>
+              <td class="text-end">
+                <button type="button" class="icono-btn icono-btn--peligro" (click)="quitarDelito(j)" aria-label="Quitar delito"><app-icono nombre="basura" /></button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="2" class="hint">Sin delitos agregados.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <ng-container modal-pie>
+      <button type="button" class="btn btn--primary" (click)="carpetaDelitos.set(null)"><app-icono nombre="check" /> Listo</button>
+    </ng-container>
+  </app-modal>
+}
+
+@if (ayuda() !== null) {
+  <app-modal [titulo]="pasos[ayuda()!].titulo" subtitulo="¿Qué debo capturar?" icono="ayuda" (cerrar)="ayuda.set(null)">
+    <ul class="ayuda">
+      @for (texto of pasos[ayuda()!].ayuda; track $index) { <li>{{ texto }}</li> }
+    </ul>
+    <ng-container modal-pie>
+      <button type="button" class="btn btn--primary" (click)="ayuda.set(null)">Entendido</button>
+    </ng-container>
+  </app-modal>
+}

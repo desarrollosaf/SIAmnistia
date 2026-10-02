@@ -1,0 +1,115 @@
+:host {
+  display: block;
+}
+
+.publico {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background:
+    radial-gradient(900px 420px at 100% -5%, rgba(150, 0, 72, 0.07), transparent 60%),
+    var(--brand-bg);
+}
+
+.encabezado {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  background: #fff;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.08);
+
+  &__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0.65rem 1.25rem;
+  }
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  text-decoration: none;
+
+  img { height: 40px; width: auto; }
+
+  &__divisor { width: 1px; height: 32px; background: var(--brand-border); }
+
+  &__texto {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--brand-primary);
+    line-height: 1.25;
+
+    small { font-size: 0.7rem; font-weight: 500; color: var(--brand-muted); }
+  }
+}
+
+.enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: 10px;
+    color: var(--brand-muted);
+    font-size: 0.84rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+
+    &:hover,
+    &.activo { background: var(--brand-primary-soft); color: var(--brand-primary); }
+  }
+
+  &__acceso {
+    border: 1.5px solid var(--brand-border);
+  }
+}
+
+.contenido {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+.pie {
+  padding: 0.9rem 1.25rem;
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-dark));
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.74rem;
+
+  &__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    max-width: 1240px;
+    margin: 0 auto;
+
+    p { margin: 0; }
+    img { height: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18); }
+  }
+
+  &__copy { color: #fff; font-weight: 700; }
+}
+
+@media (max-width: 720px) {
+  .enlaces a span { display: none; }
+  .enlaces a { padding: 0.55rem; }
+  .contenido { padding: 1.25rem 0.9rem 2rem; }
+}

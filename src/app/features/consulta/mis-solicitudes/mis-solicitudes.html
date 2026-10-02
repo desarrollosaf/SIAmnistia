@@ -1,0 +1,63 @@
+<section class="pagina">
+  <header class="pagina__encabezado">
+    <div>
+      <h1>Mis solicitudes</h1>
+      <p>Selecciona una solicitud para ver en qué etapa va.</p>
+    </div>
+    <a class="btn btn--outline" routerLink="/registro"><app-icono nombre="mas" /> Nueva solicitud</a>
+  </header>
+
+  @if (cargando()) {
+    <div class="panel"><p class="hint">Cargando tus solicitudes…</p></div>
+  } @else if (error()) {
+    <div class="panel expirada">
+      <app-icono nombre="reloj" />
+      <p>{{ error() }}</p>
+      <a class="btn btn--primary" routerLink="/consulta">Solicitar una nueva liga</a>
+    </div>
+  } @else {
+    <div class="tarjetas">
+      @for (s of solicitudes(); track s.id) {
+        <button type="button" class="tarjeta" (click)="ver(s)">
+          <span class="tarjeta__nus">Solicitud {{ s.nus }}</span>
+          <span [class]="claseEstatus(s.estatus)">{{ s.estatus }}</span>
+          <dl>
+            <div><dt>Beneficiario</dt><dd>{{ s.beneficiario }}</dd></div>
+            <div><dt>Registrada</dt><dd>{{ s.fechaRegistro | date: 'dd/MM/yyyy' }}</dd></div>
+          </dl>
+          <span class="tarjeta__ver">Ver seguimiento <app-icono nombre="flechaDer" /></span>
+        </button>
+      } @empty {
+        <div class="panel"><p class="hint">No hay solicitudes asociadas a este correo.</p></div>
+      }
+    </div>
+  }
+</section>
+
+@if (seleccionada(); as s) {
+  <app-modal [titulo]="'Solicitud ' + s.nus" [subtitulo]="s.beneficiario" icono="reloj" (cerrar)="seleccionada.set(null)">
+    @if (hitos(); as lista) {
+      <ol class="linea-tiempo">
+        @for (h of lista; track $index) {
+          <li [attr.data-tono]="h.tono">
+            <span class="linea-tiempo__punto">
+              @if (h.tono === 'ok') { <app-icono nombre="check" [grosor]="2.4" /> }
+              @else if (h.tono === 'error') { <app-icono nombre="cruz" [grosor]="2.4" /> }
+              @else { <app-icono nombre="reloj" /> }
+            </span>
+            <div>
+              <strong>{{ h.titulo }}</strong>
+              <p>{{ h.texto }}</p>
+              @if (h.fecha) { <small>{{ h.fecha | date: 'dd/MM/yyyy' }}</small> }
+            </div>
+          </li>
+        }
+      </ol>
+    } @else {
+      <p class="hint">Consultando…</p>
+    }
+    <ng-container modal-pie>
+      <button type="button" class="btn btn--primary" (click)="seleccionada.set(null)">Cerrar</button>
+    </ng-container>
+  </app-modal>
+}

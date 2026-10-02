@@ -1,0 +1,26 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: DockerFile
+      args:
+        BASE_HREF: /amnistia/
+    container_name: siamnistia-frontend
+    ports:
+      - "8095:80"
+    restart: always
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: DockerFile
+    container_name: siamnistia-backend
+    ports:
+      - "3036:3050"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/uploads:/app/uploads
+    restart: always

@@ -1,0 +1,131 @@
+<div class="shell">
+  <nav class="navbar navbar-expand-lg topbar sticky-top">
+    <div class="container-fluid px-3 px-lg-4">
+      <a class="navbar-brand topbar__brand" routerLink="/inicio">
+        <img class="topbar__logo" src="assets/congreso-edomex-logo.png" alt="Congreso del Estado de México" />
+        <span class="topbar__divider d-none d-sm-block" aria-hidden="true"></span>
+        <span class="topbar__title">Sistema de Amnistía<br /><small>Comisión Especial en Materia de Amnistía</small></span>
+      </a>
+
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#mainNav"
+        aria-controls="mainNav"
+        aria-expanded="false"
+        aria-label="Abrir menú"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav topbar__nav mx-lg-auto my-3 my-lg-0">
+          @for (item of nav(); track item.label) {
+            @if (item.children) {
+              <li class="nav-item dropdown">
+                <a
+                  class="nav-link dropdown-toggle"
+                  href="#"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  (click)="$event.preventDefault()"
+                >
+                  <app-icono [nombre]="item.icono" />
+                  {{ item.label }}
+                </a>
+                <ul class="dropdown-menu">
+                  @for (child of item.children; track child.label) {
+                    <li>
+                      <a class="dropdown-item" [routerLink]="child.route" routerLinkActive="active" (click)="cerrarMenuMovil()">
+                        {{ child.label }}
+                      </a>
+                    </li>
+                  }
+                </ul>
+              </li>
+            } @else {
+              <li class="nav-item">
+                <a class="nav-link" [routerLink]="item.route" routerLinkActive="active" (click)="cerrarMenuMovil()">
+                  <app-icono [nombre]="item.icono" />
+                  {{ item.label }}
+                </a>
+              </li>
+            }
+          }
+        </ul>
+
+        <div class="topbar__user d-flex align-items-center justify-content-between justify-content-lg-end gap-3">
+          <a
+            class="campanita"
+            [class.campanita--activa]="pendientes() > 0"
+            routerLink="/solicitudes"
+            (click)="cerrarMenuMovil()"
+            [attr.aria-label]="pendientes() > 0 ? pendientes() + ' turnos por atender' : 'Sin turnos por atender'"
+            [title]="pendientes() > 0 ? pendientes() + ' turnos por atender' : 'Sin turnos por atender'"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M12 3a5 5 0 0 0-5 5v2.586c0 .53-.211 1.039-.586 1.414L5 13.414A2 2 0 0 0 6.414 17H17.586A2 2 0 0 0 19 13.414l-1.414-1.414A2 2 0 0 1 17 10.586V8a5 5 0 0 0-5-5Z"
+                stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"
+              />
+              <path d="M9.5 17a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+            @if (pendientes() > 0) {
+              <span class="campanita__badge">{{ etiquetaPendientes() }}</span>
+            }
+          </a>
+          @if (user(); as u) {
+            <span class="topbar__username">
+              {{ u.nombre }}
+              <small>{{ u.institucion }}</small>
+            </span>
+          }
+          <button type="button" class="logout" (click)="logout()">
+            <app-icono nombre="salir" />
+            <span>Cerrar sesión</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__info text-center text-lg-start">
+        <p class="site-footer__copy mb-1">© {{ anio }} Poder Legislativo del Estado de México. Todos los derechos reservados.</p>
+        <p class="mb-0">Plaza Hidalgo s/n, Col. Centro, Toluca de Lerdo, Estado de México</p>
+        <p class="mb-0">Conmutador (722) 279-6400</p>
+      </div>
+
+      <img class="site-footer__logo" src="assets/logo-animado.gif" alt="Congreso del Estado de México" loading="lazy" />
+
+      <div class="site-footer__social text-center text-lg-end">
+        <a class="site-footer__link" href="https://www.legislativoedomex.gob.mx" target="_blank" rel="noopener noreferrer">
+          www.legislativoedomex.gob.mx
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  @if (inactivity.showWarning()) {
+    <div class="idle-overlay" role="alertdialog" aria-modal="true" aria-labelledby="idle-title">
+      <div class="idle-modal">
+        <h2 id="idle-title">¿Sigues ahí?</h2>
+        <p>
+          Por tu seguridad, la sesión se cerrará por inactividad en
+          <strong>{{ inactivity.secondsRemaining() }}</strong> segundos.
+        </p>
+        <div class="idle-modal__actions">
+          <button type="button" class="btn btn--primary" (click)="inactivity.staySignedIn()">Seguir conectado</button>
+          <button type="button" class="btn btn--outline" (click)="logout()">Cerrar sesión</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

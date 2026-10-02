@@ -1,0 +1,122 @@
+<section class="pagina">
+  <header class="pagina__encabezado">
+    <div>
+      <h1>Usuarios</h1>
+      <p>Personal del Poder Legislativo y de las instituciones a las que se turnan solicitudes.</p>
+    </div>
+    <button type="button" class="btn btn--primary" (click)="nuevo()"><app-icono nombre="mas" /> Agregar usuario</button>
+  </header>
+
+  <div class="panel">
+    <div class="row g-2 mb-3">
+      <div class="col-md-5">
+        <input type="search" class="form-control" placeholder="Buscar por nombre, correo o institución…" [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)" />
+      </div>
+      <div class="col-md-5">
+        <select class="form-select" [ngModel]="institucionFiltro()" (ngModelChange)="institucionFiltro.set($event)">
+          <option [ngValue]="0">Todas las instituciones</option>
+          @for (i of instituciones(); track i.id) { <option [ngValue]="i.id">{{ i.nombre }}</option> }
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-center justify-content-md-end">
+        <span class="hint">{{ filtrados().length }} usuarios</span>
+      </div>
+    </div>
+
+    @if (cargando()) {
+      <p class="hint">Cargando…</p>
+    } @else {
+      <div class="tabla-scroll">
+        <table class="tabla">
+          <thead>
+            <tr><th>Nombre</th><th>Institución</th><th>Contacto</th><th>Roles</th><th class="text-end">Acciones</th></tr>
+          </thead>
+          <tbody>
+            @for (u of filtrados(); track u.id) {
+              <tr>
+                <td><strong>{{ u.nombreCompleto }}</strong><small>{{ u.email }}</small></td>
+                <td>{{ u.institucion }}</td>
+                <td>{{ u.telefono }}<small>Cel. {{ u.celular }}</small></td>
+                <td>
+                  <div class="roles">
+                    @for (r of u.roles; track r.id) { <span class="rol">{{ r.nombre }}</span> } @empty { <small>Sin rol</small> }
+                  </div>
+                </td>
+                <td class="text-end text-nowrap">
+                  <button type="button" class="icono-btn me-1" (click)="editar(u)" title="Editar" aria-label="Editar"><app-icono nombre="lapiz" /></button>
+                  @if (u.id !== miId) {
+                    <button type="button" class="icono-btn icono-btn--peligro" (click)="eliminar(u)" title="Eliminar" aria-label="Eliminar"><app-icono nombre="basura" /></button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="hint">Sin usuarios.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</section>
+
+@if (editando()) {
+  <app-modal [titulo]="editando() === 'nuevo' ? 'Agregar usuario' : 'Editar usuario'" icono="persona" ancho="ancho" (cerrar)="editando.set(null)">
+    <form [formGroup]="form" class="row g-3" (ngSubmit)="guardar()">
+      <div class="col-md-4">
+        <label class="form-label" for="u-nombre">Nombre(s) <span class="req">*</span></label>
+        <input id="u-nombre" class="form-control mayusculas" formControlName="nombre" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="u-pa">Primer apellido <span class="req">*</span></label>
+        <input id="u-pa" class="form-control mayusculas" formControlName="primerApellido" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="u-sa">Segundo apellido</label>
+        <input id="u-sa" class="form-control mayusculas" formControlName="segundoApellido" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="u-email">Correo electrónico (usuario de acceso) <span class="req">*</span></label>
+        <input id="u-email" type="email" class="form-control" formControlName="email" autocomplete="off" />
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label" for="u-tel">Teléfono <span class="req">*</span></label>
+        <input id="u-tel" class="form-control" maxlength="10" formControlName="telefono" />
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label" for="u-cel">Celular <span class="req">*</span></label>
+        <input id="u-cel" class="form-control" maxlength="10" formControlName="celular" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="u-inst">Institución <span class="req">*</span></label>
+        <select id="u-inst" class="form-select" formControlName="institucionId">
+          <option [ngValue]="0">Selecciona una opción</option>
+          @for (i of instituciones(); track i.id) { <option [ngValue]="i.id">{{ i.nombre }}</option> }
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="u-pass">
+          Contraseña @if (editando() === 'nuevo') { <span class="req">*</span> } @else { <small class="hint">(vacía = sin cambio)</small> }
+        </label>
+        <input id="u-pass" type="password" class="form-control" formControlName="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" />
+      </div>
+      <div class="col-12">
+        <span class="form-label d-block">Roles</span>
+        <div class="roles-opciones">
+          @for (r of roles(); track r.id) {
+            <label class="form-check">
+              <input type="checkbox" class="form-check-input" [checked]="rolesElegidos().includes(r.id)" (change)="alternarRol(r.id, $any($event.target).checked)" />
+              <span class="form-check-label">{{ r['nombre'] }}</span>
+            </label>
+          }
+        </div>
+      </div>
+      <button type="submit" hidden></button>
+    </form>
+    <ng-container modal-pie>
+      <button type="button" class="btn btn--outline" (click)="editando.set(null)">Cancelar</button>
+      <button type="button" class="btn btn--primary" (click)="guardar()" [disabled]="guardando()">
+        @if (guardando()) { <span class="spinner"></span> } Guardar
+      </button>
+    </ng-container>
+  </app-modal>
+}

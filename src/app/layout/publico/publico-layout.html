@@ -1,0 +1,32 @@
+<div class="publico">
+  <header class="encabezado">
+    <div class="encabezado__inner">
+      <a class="marca" routerLink="/">
+        <img src="assets/congreso-edomex-logo.png" alt="Congreso del Estado de México" />
+        <span class="marca__divisor d-none d-sm-block" aria-hidden="true"></span>
+        <span class="marca__texto">Solicitud de Amnistía<small>Poder Legislativo del Estado de México</small></span>
+      </a>
+
+      <nav class="enlaces" aria-label="Opciones">
+        <a routerLink="/registro" routerLinkActive="activo"><app-icono nombre="documento" /><span>Registrar solicitud</span></a>
+        <a routerLink="/consulta" routerLinkActive="activo"><app-icono nombre="buscar" /><span>Consultar solicitud</span></a>
+        <a href="assets/aviso-privacidad.pdf" target="_blank" rel="noopener"><app-icono nombre="escudo" /><span>Aviso de privacidad</span></a>
+        <a routerLink="/login" class="enlaces__acceso"><app-icono nombre="candado" /><span>Acceso institucional</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="contenido">
+    <router-outlet />
+  </main>
+
+  <footer class="pie">
+    <div class="pie__inner">
+      <div>
+        <p class="pie__copy">© {{ anio }} Poder Legislativo del Estado de México</p>
+        <p>Comisión Especial en Materia de Amnistía · Plaza Hidalgo s/n, Col. Centro, Toluca de Lerdo · Conmutador (722) 279-6400</p>
+      </div>
+      <img src="assets/logo-animado.gif" alt="Congreso del Estado de México" loading="lazy" />
+    </div>
+  </footer>
+</div>

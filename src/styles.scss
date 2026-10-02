@@ -1,0 +1,325 @@
+/* Estilos globales: identidad del Poder Legislativo sobre Bootstrap 5. */
+
+:root {
+  --brand-primary: rgb(150, 0, 72);
+  --brand-primary-dark: #5a002b;
+  --brand-primary-soft: rgba(150, 0, 72, 0.08);
+  --brand-ink: #4b4b4d;
+  --brand-muted: #767679;
+  --brand-border: #e4e2e3;
+  --brand-bg: #f3f4f6;
+  --brand-danger: #b3261e;
+  --brand-danger-bg: #fdecea;
+  --brand-green: #79b037;
+  --brand-lime: #d6ed70;
+  --brand-amber: #c77700;
+  --brand-blue: #1d5fbf;
+
+  --bs-primary: var(--brand-primary);
+  --bs-link-color: var(--brand-primary);
+  --bs-link-hover-color: var(--brand-primary-dark);
+  --bs-body-color: var(--brand-ink);
+  --bs-border-color: var(--brand-border);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ag-grid renders its own DOM outside Angular's style encapsulation,
+   so header alignment has to be set globally rather than per-component. */
+ag-grid-angular .ag-header-cell-label {
+  justify-content: center;
+}
+
+ag-grid-angular .ag-header-cell-label .ag-header-cell-text {
+  text-overflow: clip;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  color: var(--brand-ink);
+  background: #fff;
+}
+
+/* ---------- Botones ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.7rem 1.3rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s, border-color 0.15s, opacity 0.12s, background 0.15s;
+
+  svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  &--primary {
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-dark));
+    color: #fff;
+    box-shadow: 0 10px 22px var(--brand-primary-soft);
+
+    &:hover:not(:disabled) { color: #fff; transform: translateY(-1px); box-shadow: 0 14px 28px rgba(150, 0, 72, 0.24); }
+  }
+
+  &--outline {
+    background: #fff;
+    color: var(--brand-ink);
+    border: 1.5px solid var(--brand-border);
+
+    &:hover:not(:disabled) { border-color: var(--brand-primary); color: var(--brand-primary); }
+  }
+
+  &--danger {
+    background: #fff;
+    color: var(--brand-danger);
+    border: 1.5px solid rgba(179, 38, 30, 0.35);
+
+    &:hover:not(:disabled) { background: var(--brand-danger); color: #fff; }
+  }
+
+  &--success {
+    background: #1a8a4a;
+    color: #fff;
+
+    &:hover:not(:disabled) { color: #fff; transform: translateY(-1px); box-shadow: 0 12px 24px rgba(26, 138, 74, 0.25); }
+  }
+
+  &--sm { padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 10px; }
+
+  &:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spinner-spin 0.7s linear infinite;
+
+  &--oscuro { border-color: var(--brand-primary-soft); border-top-color: var(--brand-primary); }
+}
+
+@keyframes spinner-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Formularios (sobre Bootstrap) ---------- */
+
+.form-label {
+  margin-bottom: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--brand-ink);
+
+  .req { color: var(--brand-primary); }
+}
+
+.form-control,
+.form-select {
+  min-height: 44px;
+  border: 1.5px solid var(--brand-border);
+  border-radius: 10px;
+  background-color: #fafafa;
+  font-size: 0.9rem;
+  color: var(--brand-ink);
+
+  &:focus {
+    border-color: var(--brand-primary);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px var(--brand-primary-soft);
+  }
+
+  &.is-invalid { border-color: var(--brand-danger); }
+}
+
+.form-check-input {
+  width: 1.15em;
+  height: 1.15em;
+  border: 1.5px solid #b9b7b8;
+
+  &:checked { background-color: var(--brand-primary); border-color: var(--brand-primary); }
+  &:focus { box-shadow: 0 0 0 3px var(--brand-primary-soft); border-color: var(--brand-primary); }
+}
+
+.form-check-label { font-size: 0.88rem; }
+
+.form-text { font-size: 0.76rem; color: var(--brand-muted); }
+
+.invalid-feedback { font-size: 0.76rem; }
+
+.mayusculas { text-transform: uppercase; }
+
+/* ---------- Página interna ---------- */
+
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: pagina-in 0.3s ease-out;
+
+  &__encabezado {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+
+    h1 { margin: 0 0 0.3rem; font-size: 1.5rem; font-weight: 700; color: var(--brand-ink); }
+    p { margin: 0; color: var(--brand-muted); font-size: 0.9rem; }
+  }
+
+  &__acciones { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid var(--brand-border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+
+  &__titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 1.1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--brand-ink);
+
+    svg { width: 20px; height: 20px; color: var(--brand-primary); }
+  }
+}
+
+.hint {
+  margin: 0;
+  color: var(--brand-muted);
+  font-size: 0.88rem;
+
+  &--error { color: var(--brand-danger); }
+}
+
+/* Etiqueta de estatus de solicitud/turno. */
+.estatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  background: var(--brand-bg);
+  color: var(--brand-muted);
+
+  &::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  &--registrada { background: #e8f0fc; color: var(--brand-blue); }
+  &--evaluacion { background: #fff4e0; color: var(--brand-amber); }
+  &--terminada { background: #e6f5ec; color: #1a8a4a; }
+  &--concluida { background: #e4f3f3; color: #11756f; }
+  &--no-procede { background: var(--brand-danger-bg); color: var(--brand-danger); }
+  &--prevencion { background: #f3e8fb; color: #7b2fa8; }
+  &--turnada { background: #e8f0fc; color: var(--brand-blue); }
+}
+
+/* Datos de solo lectura en el detalle. */
+.datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem 1.5rem;
+  margin: 0;
+
+  div { min-width: 0; }
+  dt { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--brand-muted); }
+  dd { margin: 0.15rem 0 0; font-size: 0.92rem; font-weight: 600; color: var(--brand-ink); overflow-wrap: anywhere; }
+}
+
+/* Tabla sencilla (listas cortas dentro de paneles y modales). */
+.tabla {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.85rem;
+
+  th {
+    padding: 0.6rem 0.75rem;
+    background: var(--brand-bg);
+    color: var(--brand-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: left;
+
+    &:first-child { border-radius: 10px 0 0 10px; }
+    &:last-child { border-radius: 0 10px 10px 0; }
+  }
+
+  td { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--brand-border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+}
+
+.tabla-scroll { width: 100%; overflow-x: auto; }
+
+/* Botón de icono redondo (acciones en tablas). */
+.icono-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
+
+  svg { width: 16px; height: 16px; }
+  &:hover { background: var(--brand-primary); color: #fff; transform: translateY(-1px); }
+  &--peligro { background: #fbeceb; color: var(--brand-danger); &:hover { background: var(--brand-danger); color: #fff; } }
+}
+
+.grid {
+  width: 100%;
+  cursor: grab;
+}
+
+.arrastrando-tabla .grid,
+.arrastrando-tabla .grid * {
+  cursor: grabbing !important;
+}
+
+@keyframes pagina-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .pagina { animation: none; }
+}
+
+/* SweetAlert2 con la paleta institucional. */
+.swal2-popup { border-radius: 18px !important; font-family: inherit !important; }
+.swal2-styled.swal2-confirm { border-radius: 10px !important; }
+.swal2-styled.swal2-cancel { border-radius: 10px !important; }

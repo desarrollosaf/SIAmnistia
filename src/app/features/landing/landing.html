@@ -1,0 +1,189 @@
+<header class="nav" [class.nav--compacta]="compacta()">
+  <div class="contenedor nav__inner">
+    <a class="nav__marca" routerLink="/">
+      <img src="assets/congreso-edomex-logo.png" alt="Congreso del Estado de México" />
+    </a>
+    <button type="button" class="nav__menu" (click)="menuAbierto.set(!menuAbierto())" aria-label="Abrir menú" [attr.aria-expanded]="menuAbierto()">
+      <app-icono [nombre]="menuAbierto() ? 'cruz' : 'lista'" />
+    </button>
+    <nav class="nav__enlaces" [class.abierto]="menuAbierto()">
+      <button type="button" (click)="ir('beneficiarios')">Beneficiarias/os</button>
+      <button type="button" (click)="ir('procedimiento')">Procedimiento</button>
+      <button type="button" (click)="ir('preguntas')">Preguntas frecuentes</button>
+      <button type="button" (click)="ir('ley')">Conoce la Ley</button>
+      <a routerLink="/consulta">Consultar solicitud</a>
+      <a [routerLink]="conSesion ? '/inicio' : '/login'">{{ conSesion ? 'Ir al sistema' : 'Acceso institucional' }}</a>
+      <a class="nav__cta" routerLink="/registro"><app-icono nombre="documento" /> Petición de amnistía</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="contenedor hero__grid">
+    <div>
+      <span class="etiqueta"><app-icono nombre="balanza" /> Poder Legislativo · Estado de México</span>
+      <h1>Solicitud de <em>Amnistía</em></h1>
+      <p class="hero__lead">Comisión Especial de Amnistía de la Legislatura del Estado de México. Trámite 100% gratuito y digital.</p>
+      <div class="chips">
+        <span><app-icono nombre="check" /> Trámite gratuito</span>
+        <span><app-icono nombre="check" /> 100% digital</span>
+        <span><app-icono nombre="correo" /> Notificación por correo</span>
+        <span><app-icono nombre="escudo" /> Proceso transparente</span>
+      </div>
+      <div class="hero__acciones">
+        <a class="boton boton--claro" routerLink="/registro"><app-icono nombre="documento" /> Registrar petición</a>
+        <button type="button" class="boton boton--contorno" (click)="ir('beneficiarios')">Conocer más <app-icono nombre="flechaDer" /></button>
+      </div>
+    </div>
+    <div>
+      <div class="video">
+        <iframe
+          src="https://www.youtube-nocookie.com/embed/JCnPjaTt1uo"
+          title="Video tutorial: solicitud de amnistía"
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+          loading="lazy"
+        ></iframe>
+      </div>
+      <div class="cifras">
+        <div><strong>$0</strong><span>Costo del trámite</span></div>
+        <div><strong>Digital</strong><span>Desde cualquier lugar</span></div>
+        <div><strong>60+</strong><span>Días hábiles de proceso</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="seccion" id="beneficiarios">
+  <div class="contenedor beneficiarios">
+    <div>
+      <span class="eyebrow">¿Quiénes pueden solicitarla?</span>
+      <h2>Beneficiarias y Beneficiarios</h2>
+      <p>
+        La Ley de Amnistía del Estado de México busca beneficiar a personas que estén vinculadas a proceso, o que se les
+        haya dictado sentencia firme ante juzgados locales, por los delitos señalados en la misma y que hayan sido cometidos
+        hasta antes de la fecha de su entrada en vigor, siempre y cuando no exista reincidencia por el mismo delito.
+      </p>
+      <blockquote>"La Ley de Amnistía del Estado de México beneficia a personas vinculadas a proceso siempre y cuando no sean reincidentes."</blockquote>
+      <p>
+        La Comisión Especial de Amnistía del Poder Legislativo conoce aquellos casos que por su relevancia son puestos a su
+        consideración, en los que acredite debidamente que existe violación de derechos o fallas en la aplicación de alguno
+        de los principios penales del sistema acusatorio, o la plena presunción de fabricación de delitos.
+      </p>
+      <p>
+        Las personas que se encuentren sustraídas de la acción de la justicia por delitos a que se refiere la Ley de
+        Amnistía del Estado de México podrán también beneficiarse mediante la solicitud correspondiente presentada ante el
+        Poder Judicial del Estado de México.
+      </p>
+
+      <details class="desplegable">
+        <summary><span class="desplegable__icono"><app-icono nombre="martillo" /></span> Casos contemplados en la Ley (Art. 4)</summary>
+        <div class="desplegable__cuerpo">
+          <p><strong>Artículo 4.- Se decretará amnistía en los siguientes supuestos:</strong></p>
+          <ol class="supuestos">
+            @for (s of supuestos; track $index) {
+              <li>
+                {{ s.titulo }}
+                <ul>
+                  @for (c of s.casos; track $index) { <li>{{ c }}</li> }
+                </ul>
+              </li>
+            }
+          </ol>
+        </div>
+      </details>
+    </div>
+
+    <aside>
+      <div class="cta">
+        <app-icono nombre="documento" />
+        <h3>¿Listo para solicitar?</h3>
+        <p>El trámite es completamente gratuito, digital y puedes realizarlo desde cualquier dispositivo.</p>
+        <a class="boton boton--claro" routerLink="/registro"><app-icono nombre="flechaDer" /> Registrar petición</a>
+      </div>
+      <div class="alternativas">
+        <h4><app-icono nombre="info" /> ¿No cumples estos supuestos?</h4>
+        <p><app-icono nombre="balanza" /> Puedes acudir al <strong>Poder Judicial del Estado de México</strong></p>
+        <p><app-icono nombre="escudo" /> O ante la <strong>Comisión de Derechos Humanos del Estado de México</strong></p>
+        <p><app-icono nombre="telefono" /> Para más información consulta a un defensor público</p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section class="seccion seccion--gris" id="procedimiento">
+  <div class="contenedor">
+    <div class="titulo-centrado">
+      <span class="eyebrow">¿Cómo funciona?</span>
+      <h2>Procedimiento</h2>
+      <p>Conoce paso a paso cómo funciona el proceso de solicitud de amnistía ante la Comisión Especial.</p>
+    </div>
+    <ol class="pasos">
+      @for (p of procedimiento; track p.titulo; let i = $index) {
+        <li>
+          <span class="pasos__numero">{{ i + 1 }}</span>
+          <h3>{{ p.titulo }}</h3>
+          <p>{{ p.texto }}</p>
+        </li>
+      }
+    </ol>
+    <div class="aviso">
+      <app-icono nombre="alerta" />
+      <p>
+        <strong>Aviso importante.</strong> La recepción de la solicitud por parte de la Comisión Especial
+        <strong>NO implica el otorgamiento de la Amnistía</strong>. La resolución final depende del Poder Judicial del
+        Estado de México conforme a los criterios establecidos en la Ley.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="seccion" id="preguntas">
+  <div class="contenedor contenedor--angosto">
+    <div class="titulo-centrado">
+      <span class="eyebrow">Dudas comunes</span>
+      <h2>Preguntas frecuentes</h2>
+    </div>
+    @for (q of preguntas; track q.pregunta) {
+      <details class="desplegable">
+        <summary><span class="desplegable__icono">Q</span> {{ q.pregunta }}</summary>
+        <div class="desplegable__cuerpo">
+          @if (q.texto) { <p>{{ q.texto }}</p> }
+          @if (q.lista) {
+            <ul>
+              @for (l of q.lista; track $index) { <li>{{ l }}</li> }
+            </ul>
+          }
+          @if (q.nota) { <p class="nota">{{ q.nota }}</p> }
+        </div>
+      </details>
+    }
+  </div>
+</section>
+
+<section class="seccion ley" id="ley">
+  <div class="contenedor ley__grid">
+    <div>
+      <span class="etiqueta"><app-icono nombre="documento" /> Descarga el documento oficial</span>
+      <h2>Conoce la Ley de Amnistía</h2>
+      <p>
+        La Ley de Amnistía del Estado de México es un avance democrático que atiende la necesidad de mejorar la impartición
+        de justicia en nuestro estado. Conocerla es importante para que los Derechos Humanos de todas y todos estén garantizados.
+      </p>
+      <a class="boton boton--claro" [href]="urlLey" target="_blank" rel="noopener"><app-icono nombre="pdf" /> Descargar Ley (PDF · 231 KB)</a>
+    </div>
+    <div class="ley__icono"><app-icono nombre="balanza" [grosor]="1.4" /></div>
+  </div>
+</section>
+
+<footer class="pie">
+  <div class="contenedor">
+    <p>Comisión Especial de Amnistía · Poder Legislativo del Estado de México · Plaza Hidalgo S/N, Col. Centro, Toluca, Méx. C.P. 50000</p>
+    <p>Trámite gratuito y sin costo alguno para el solicitante. © {{ anio }}</p>
+    <p>
+      <a href="assets/aviso-privacidad.pdf" target="_blank" rel="noopener">Aviso de privacidad</a> ·
+      <a routerLink="/consulta">Consultar solicitud</a> ·
+      <a routerLink="/login">Acceso institucional</a>
+    </p>
+  </div>
+</footer>

@@ -1,0 +1,93 @@
+services:
+  frontend:
+    image: node:24-alpine
+    container_name: siamnistia-frontend
+    working_dir: /app
+
+    ports:
+      - "4230:4200"
+
+    volumes:
+      - .:/app
+      - frontend_node_modules:/app/node_modules
+      - /app/backend
+
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      BACKEND_HOST: backend
+      BACKEND_PORT: "3050"
+
+    command: >
+      sh -c "npm install &&
+      npm run start --
+      --host 0.0.0.0
+      --port 4200
+      --poll=1000"
+
+    depends_on:
+      - backend
+
+    restart: unless-stopped
+
+  backend:
+    image: node:24-alpine
+    container_name: siamnistia-backend
+    working_dir: /app
+
+    ports:
+      - "3075:3050"
+
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+      - ./backend/uploads:/app/uploads
+
+    env_file:
+      - ./backend/.env
+
+    environment:
+      NODE_ENV: development
+      PORT: 3050
+      CHOKIDAR_USEPOLLING: "true"
+      # Chromium del sistema para generar el acuse y la ficha técnica (puppeteer-core).
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    command: >
+      sh -c "apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont &&
+      npm install &&
+      npm run migrate &&
+      npm run start:dev"
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    restart: unless-stopped
+
+  # Base de datos local de desarrollo (misma versión que producción). En el servidor se usa la
+  # base existente: DB_HOST del .env apunta a ella y este servicio no se levanta en prod.
+  db:
+    image: mariadb:10.5
+    container_name: siamnistia-db
+    ports:
+      - "3076:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: amnistia_local
+      MARIADB_DATABASE: amnistia
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  frontend_node_modules:
+  backend_node_modules:
+  db_data:
