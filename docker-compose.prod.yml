@@ -7,7 +7,7 @@ services:
         BASE_HREF: /
     container_name: siamnistia-frontend
     ports:
-      - "8095:80"
+      - "8079:80"
     restart: always
     depends_on:
       - backend
@@ -18,7 +18,7 @@ services:
       dockerfile: DockerFile
     container_name: siamnistia-backend
     ports:
-      - "3036:3050"
+      - "3038:3050"
     env_file:
       - ./backend/.env
     volumes:
