@@ -379,6 +379,15 @@ export class Registro {
     this.carpetaDelitos.set(indice);
   }
 
+  /** Separa un texto en líneas (el catálogo trae saltos antes de los numerales I., II., ...). */
+  protected lineas(texto: string): { texto: string; sangria: boolean }[] {
+    return texto
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((l) => ({ texto: l, sangria: /^[IVXLC]+\.\s/.test(l) }));
+  }
+
   agregarDelito(): void {
     const indice = this.carpetaDelitos();
     const delito = this.delitoElegido();
