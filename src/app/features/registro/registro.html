@@ -440,50 +440,47 @@
     (cerrar)="carpetaDelitos.set(null)"
   >
     <form class="delitos-form" [formGroup]="nuevoDelito" (ngSubmit)="agregarDelito()">
-      <div>
-        <span class="form-label" id="m-delito-etq">Delito</span>
-        <div class="modalidades" role="radiogroup" aria-labelledby="m-delito-etq">
-          @for (d of catalogos()?.delitos ?? []; track d.id) {
-            <button
-              type="button"
-              role="radio"
-              class="modalidades__op"
-              [class.modalidades__op--activa]="delitoValor().delitoId === d.id"
-              [attr.aria-checked]="delitoValor().delitoId === d.id"
-              (click)="nuevoDelito.controls.delitoId.setValue(d.id)"
-            >
-              <span class="modalidades__marca">@if (delitoValor().delitoId === d.id) { <app-icono nombre="check" /> }</span>
-              <span class="modalidades__texto">@for (l of lineas(d.nombre); track $index) { <span class="linea" [class.linea--sangria]="l.sangria">{{ l.texto }}</span> }</span>
+      <div class="acordeon">
+        @for (d of catalogos()?.delitos ?? []; track d.id) {
+          <section class="acordeon__item" [class.acordeon__item--abierto]="delitoAbierto() === d.id">
+            <button type="button" class="acordeon__cabecera" [attr.aria-expanded]="delitoAbierto() === d.id" (click)="alternarDelito(d.id)">
+              <span class="acordeon__titulo">@for (l of lineas(d.nombre); track $index) { <span class="renglon" [class.renglon--sangria]="l.sangria">{{ l.texto }}</span> }</span>
+              <span class="acordeon__estado" [class.acordeon__estado--ok]="delitoConOpcion(d)">{{ delitoConOpcion(d) ? '✓' : '–' }}</span>
+              <svg class="acordeon__flecha" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
             </button>
-          }
-        </div>
-      </div>
-      @if (delitoEsOtro()) {
-        <div>
-          <label class="form-label" for="m-otro">Nombre del delito</label>
-          <input id="m-otro" class="form-control mayusculas" formControlName="delitoOtro" maxlength="255" placeholder="Ej. DAÑO EN LOS BIENES" />
-        </div>
-      } @else if (delitoElegido()?.modalidades?.length) {
-        <div>
-          <span class="form-label" id="m-modalidad-etq">Modalidad <small class="text-muted fw-normal">(elige una)</small></span>
-          <div class="modalidades" role="radiogroup" aria-labelledby="m-modalidad-etq">
-            @for (m of delitoElegido()!.modalidades; track m.id) {
-              <button
-                type="button"
-                role="radio"
-                class="modalidades__op"
-                [class.modalidades__op--activa]="delitoValor().modalidadId === m.id"
-                [attr.aria-checked]="delitoValor().modalidadId === m.id"
-                (click)="nuevoDelito.controls.modalidadId.setValue(m.id)"
-              >
-                <span class="modalidades__marca">@if (delitoValor().modalidadId === m.id) { <app-icono nombre="check" /> }</span>
-                <span class="modalidades__texto">@for (l of lineas(m.nombre); track $index) { <span class="linea" [class.linea--sangria]="l.sangria">{{ l.texto }}</span> }</span>
-              </button>
+            @if (delitoAbierto() === d.id) {
+              <div class="acordeon__cuerpo">
+                @if (esOtroDelito(d)) {
+                  <label class="form-label" [for]="'m-otro-' + d.id">Escribe el nombre del delito</label>
+                  <input [id]="'m-otro-' + d.id" class="form-control mayusculas" formControlName="delitoOtro" maxlength="255" placeholder="Ej. DAÑO EN LOS BIENES" />
+                } @else if (d.modalidades.length) {
+                  <p class="acordeon__ayuda">Elige una modalidad</p>
+                  <div class="modalidades" role="radiogroup">
+                    @for (m of d.modalidades; track m.id) {
+                      <button
+                        type="button"
+                        role="radio"
+                        class="modalidades__op"
+                        [class.modalidades__op--activa]="delitoValor().modalidadId === m.id"
+                        [attr.aria-checked]="delitoValor().modalidadId === m.id"
+                        (click)="nuevoDelito.controls.modalidadId.setValue(m.id)"
+                      >
+                        <span class="modalidades__marca">@if (delitoValor().modalidadId === m.id) { <app-icono nombre="check" /> }</span>
+                        <span class="modalidades__texto">@for (l of lineas(m.nombre); track $index) { <span class="renglon" [class.renglon--sangria]="l.sangria">{{ l.texto }}</span> }</span>
+                      </button>
+                    }
+                  </div>
+                } @else {
+                  <p class="acordeon__ayuda">Este delito no tiene modalidades. Puedes agregarlo directamente.</p>
+                }
+              </div>
             }
-          </div>
-        </div>
-      }
+          </section>
+        }
+      </div>
+
       <div class="delitos-form__accion">
+        <span class="delitos-form__contador">{{ carpetas()[carpetaDelitos()!].delitos.length }} agregado(s)</span>
         <button type="submit" class="btn btn--primary"><app-icono nombre="mas" /> Agregar delito</button>
       </div>
     </form>
@@ -492,7 +489,7 @@
       <h3>Delitos agregados <span>{{ carpetas()[carpetaDelitos()!].delitos.length }}</span></h3>
       @for (d of carpetas()[carpetaDelitos()!].delitos; track d.texto; let j = $index) {
         <div class="delitos-lista__item">
-          <span class="delitos-lista__texto">@for (l of lineas(d.texto); track $index) { <span class="linea" [class.linea--sangria]="l.sangria">{{ l.texto }}</span> }</span>
+          <span class="delitos-lista__texto">@for (l of lineas(d.texto); track $index) { <span class="renglon" [class.renglon--sangria]="l.sangria">{{ l.texto }}</span> }</span>
           <button type="button" class="icono-btn icono-btn--peligro" (click)="quitarDelito(j)" aria-label="Quitar delito"><app-icono nombre="basura" /></button>
         </div>
       } @empty {

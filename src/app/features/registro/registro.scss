@@ -253,7 +253,13 @@
 .delitos-form {
   display: grid; gap: .9rem; padding: 1rem; border: 1px solid var(--brand-border); border-radius: 14px; background: var(--brand-bg);
   select, input { width: 100%; min-width: 0; text-overflow: ellipsis; }
-  &__accion { display: flex; justify-content: flex-end; }
+  // Fija al fondo del cuerpo del modal para no perder el botón al desplazarse por el acordeón.
+  &__accion {
+    position: sticky; bottom: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    margin: 0 -1rem -1rem; padding: .8rem 1rem; border-top: 1px solid var(--brand-border); border-radius: 0 0 14px 14px;
+    background: var(--brand-bg); box-shadow: 0 -6px 12px rgba(0, 0, 0, .05);
+  }
+  &__contador { font-size: .82rem; color: var(--brand-muted); }
 }
 
 .delitos-lista {
@@ -291,7 +297,30 @@
 }
 
 // Líneas de un texto con numerales (I., II., ...): cada una en su renglón, con sangría francesa.
-.linea {
+.renglon {
   display: block;
   &--sangria { margin-top: .3rem; padding-left: 1.75rem; text-indent: -1.1rem; }
+}
+
+// Acordeón de delitos: un bloque por delito, con su selector de modalidad al abrirlo
+.acordeon {
+  display: grid; gap: .55rem;
+  &__item { border: 1px solid var(--brand-border); border-radius: 12px; background: #fff; overflow: hidden;
+    &--abierto { border-color: var(--brand-primary); } }
+  &__cabecera {
+    display: flex; align-items: center; gap: .75rem; width: 100%; padding: .85rem 1rem; border: 0; background: none; text-align: left;
+    cursor: pointer; font: inherit; font-size: .9rem; line-height: 1.4; color: inherit;
+    &:hover { background: var(--brand-primary-soft); }
+  }
+  &__titulo { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  &__estado {
+    display: grid; place-items: center; flex-shrink: 0; min-width: 24px; height: 24px; border-radius: 999px;
+    background: var(--brand-bg); color: var(--brand-muted); font-size: .75rem; font-weight: 700;
+    &--ok { background: var(--brand-primary-soft); color: var(--brand-primary); }
+  }
+  &__flecha { flex-shrink: 0; color: var(--brand-muted); transition: transform .2s; }
+  &__item--abierto &__flecha { transform: rotate(180deg); }
+  &__cuerpo { padding: .8rem 1rem 1rem; border-top: 1px solid var(--brand-border); background: #fcfafb; }
+  &__ayuda { margin: 0 0 .55rem; font-size: .78rem; color: var(--brand-muted); }
+  .modalidades { max-height: none; overflow: visible; padding: 0; }
 }
