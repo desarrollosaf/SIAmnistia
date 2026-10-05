@@ -441,11 +441,22 @@
   >
     <form class="delitos-form" [formGroup]="nuevoDelito" (ngSubmit)="agregarDelito()">
       <div>
-        <label class="form-label" for="m-delito">Delito</label>
-        <select id="m-delito" class="form-select" formControlName="delitoId">
-          <option [ngValue]="0">Selecciona una opción</option>
-          @for (d of catalogos()?.delitos ?? []; track d.id) { <option [ngValue]="d.id">{{ d.nombre }}</option> }
-        </select>
+        <span class="form-label" id="m-delito-etq">Delito</span>
+        <div class="modalidades" role="radiogroup" aria-labelledby="m-delito-etq">
+          @for (d of catalogos()?.delitos ?? []; track d.id) {
+            <button
+              type="button"
+              role="radio"
+              class="modalidades__op"
+              [class.modalidades__op--activa]="delitoValor().delitoId === d.id"
+              [attr.aria-checked]="delitoValor().delitoId === d.id"
+              (click)="nuevoDelito.controls.delitoId.setValue(d.id)"
+            >
+              <span class="modalidades__marca">@if (delitoValor().delitoId === d.id) { <app-icono nombre="check" /> }</span>
+              <span class="modalidades__texto">{{ d.nombre }}</span>
+            </button>
+          }
+        </div>
       </div>
       @if (delitoEsOtro()) {
         <div>

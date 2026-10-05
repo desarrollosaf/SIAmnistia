@@ -72,10 +72,6 @@
     &:hover,
     &.activo { background: var(--brand-primary-soft); color: var(--brand-primary); }
   }
-
-  &__acceso {
-    border: 1.5px solid var(--brand-border);
-  }
 }
 
 .contenido {

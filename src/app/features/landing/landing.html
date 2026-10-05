@@ -12,7 +12,6 @@
       <button type="button" (click)="ir('preguntas')">Preguntas frecuentes</button>
       <button type="button" (click)="ir('ley')">Conoce la Ley</button>
       <a routerLink="/consulta">Consultar solicitud</a>
-      <a [routerLink]="conSesion ? '/inicio' : '/login'">{{ conSesion ? 'Ir al sistema' : 'Acceso institucional' }}</a>
       <a class="nav__cta" routerLink="/registro"><app-icono nombre="documento" /> Petición de amnistía</a>
     </nav>
   </div>
