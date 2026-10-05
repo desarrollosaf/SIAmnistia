@@ -453,7 +453,7 @@
               (click)="nuevoDelito.controls.delitoId.setValue(d.id)"
             >
               <span class="modalidades__marca">@if (delitoValor().delitoId === d.id) { <app-icono nombre="check" /> }</span>
-              <span class="modalidades__texto">{{ d.nombre }}</span>
+              <span class="modalidades__texto">@for (l of lineas(d.nombre); track $index) { <span class="linea" [class.linea--sangria]="l.sangria">{{ l.texto }}</span> }</span>
             </button>
           }
         </div>
@@ -477,7 +477,7 @@
                 (click)="nuevoDelito.controls.modalidadId.setValue(m.id)"
               >
                 <span class="modalidades__marca">@if (delitoValor().modalidadId === m.id) { <app-icono nombre="check" /> }</span>
-                <span class="modalidades__texto">{{ m.nombre }}</span>
+                <span class="modalidades__texto">@for (l of lineas(m.nombre); track $index) { <span class="linea" [class.linea--sangria]="l.sangria">{{ l.texto }}</span> }</span>
               </button>
             }
           </div>
@@ -492,7 +492,7 @@
       <h3>Delitos agregados <span>{{ carpetas()[carpetaDelitos()!].delitos.length }}</span></h3>
       @for (d of carpetas()[carpetaDelitos()!].delitos; track d.texto; let j = $index) {
         <div class="delitos-lista__item">
-          <span class="delitos-lista__texto">{{ d.texto }}</span>
+          <span class="delitos-lista__texto">@for (l of lineas(d.texto); track $index) { <span class="linea" [class.linea--sangria]="l.sangria">{{ l.texto }}</span> }</span>
           <button type="button" class="icono-btn icono-btn--peligro" (click)="quitarDelito(j)" aria-label="Quitar delito"><app-icono nombre="basura" /></button>
         </div>
       } @empty {

@@ -289,3 +289,9 @@
   &__op--activa &__marca { border-color: var(--brand-primary); background: var(--brand-primary); }
   &__texto { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 }
+
+// Líneas de un texto con numerales (I., II., ...): cada una en su renglón, con sangría francesa.
+.linea {
+  display: block;
+  &--sangria { margin-top: .3rem; padding-left: 1.75rem; text-indent: -1.1rem; }
+}
