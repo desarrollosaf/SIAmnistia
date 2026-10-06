@@ -12,7 +12,7 @@ import { Icono } from '../icono/icono';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="fondo" (click)="cerrarDesdeFondo($event)">
-      <div class="ventana" [class.ventana--ancha]="ancho() === 'ancho'" role="dialog" aria-modal="true" [attr.aria-label]="titulo()">
+      <div class="ventana" [class.ventana--ancha]="ancho() === 'ancho'" [class.ventana--amplia]="ancho() === 'amplio'" role="dialog" aria-modal="true" [attr.aria-label]="titulo()">
         <header class="ventana__encabezado">
           @if (icono()) {
             <span class="ventana__icono"><app-icono [nombre]="icono()!" /></span>
@@ -42,6 +42,7 @@ import { Icono } from '../icono/icono';
       background: #fff; border-radius: 18px; box-shadow: 0 24px 60px rgba(0, 0, 0, .3); animation: subir .2s ease-out;
     }
     .ventana--ancha { max-width: 860px; }
+    .ventana--amplia { max-width: 1080px; }
     .ventana__encabezado {
       display: flex; align-items: flex-start; gap: .85rem; padding: 1.25rem 1.4rem 1rem; border-bottom: 1px solid var(--brand-border);
       h2 { margin: 0; font-size: 1.08rem; font-weight: 700; color: var(--brand-ink); }
@@ -71,7 +72,7 @@ export class Modal {
   readonly titulo = input.required<string>();
   readonly subtitulo = input<string>('');
   readonly icono = input<string | null>(null);
-  readonly ancho = input<'normal' | 'ancho'>('normal');
+  readonly ancho = input<'normal' | 'ancho' | 'amplio'>('normal');
   readonly cerrar = output<void>();
 
   @HostListener('document:keydown.escape')

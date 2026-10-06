@@ -80,6 +80,7 @@ export class Registro {
   // Carpetas y delitos.
   protected readonly carpetas = signal<Carpeta[]>([]);
   protected readonly carpetaDelitos = signal<number | null>(null);
+  protected readonly delitoAbierto = signal(0);
 
   protected readonly fechaMin = `${new Date().getFullYear() - 100}-01-01`;
   protected readonly fechaMax = `${new Date().getFullYear() - 10}-12-31`;
@@ -376,7 +377,30 @@ export class Registro {
 
   abrirDelitos(indice: number): void {
     this.nuevoDelito.reset();
+    this.delitoAbierto.set(0);
     this.carpetaDelitos.set(indice);
+  }
+
+  /** Abre/cierra un delito del acordeón; al abrir otro se descarta la selección del anterior. */
+  protected alternarDelito(id: number): void {
+    if (this.delitoAbierto() === id) {
+      this.delitoAbierto.set(0);
+      return;
+    }
+    this.delitoAbierto.set(id);
+    if (this.delitoValor().delitoId !== id) this.nuevoDelito.controls.delitoId.setValue(id);
+  }
+
+  protected esOtroDelito(d: DelitoCatalogo): boolean {
+    return esOtro(d.nombre);
+  }
+
+  /** El delito tiene una opción elegida (modalidad, nombre capturado o sin modalidades). */
+  protected delitoConOpcion(d: DelitoCatalogo): boolean {
+    const v = this.delitoValor();
+    if (v.delitoId !== d.id) return false;
+    if (esOtro(d.nombre)) return v.delitoOtro.trim().length > 0;
+    return d.modalidades.length ? v.modalidadId > 0 : true;
   }
 
   /** Separa un texto en líneas (el catálogo trae saltos antes de los numerales I., II., ...). */
@@ -425,6 +449,7 @@ export class Registro {
       lista.map((c, i) => (i === indice ? { ...c, delitos: [...c.delitos, { delitoId: delito.id, modalidadId, delitoOtro, texto }] } : c)),
     );
     this.nuevoDelito.reset();
+    this.delitoAbierto.set(0);
     this.toast.success('Se agregó el delito.');
   }
 
