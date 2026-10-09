@@ -1,5 +1,5 @@
 import {
-  Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany,
+  Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany, HasOne,
 } from 'sequelize-typescript';
 import { MORPH, OPCIONES_TABLA_PARANOID } from './opciones-tabla';
 import { Persona } from './persona.model';
@@ -14,6 +14,7 @@ import { SolicitudCarpeta } from './solicitud-carpeta.model';
 import { SolicitudUser } from './solicitud-user.model';
 import { Documento } from './documento.model';
 import { Suspencion } from './suspencion.model';
+import { SolicitudDatosFormato } from './solicitud-datos-formato.model';
 
 @Table({ tableName: 'solicitudes', ...OPCIONES_TABLA_PARANOID })
 export class Solicitud extends Model {
@@ -130,6 +131,9 @@ export class Solicitud extends Model {
 
   @HasMany(() => SolicitudCarpeta)
   declare solicitud_carpetas: SolicitudCarpeta[];
+
+  @HasOne(() => SolicitudDatosFormato)
+  declare datos_formato: SolicitudDatosFormato | null;
 
   @HasMany(() => SolicitudUser)
   declare solicitud_usuarios: SolicitudUser[];

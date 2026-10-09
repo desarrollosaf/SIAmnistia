@@ -160,6 +160,28 @@ export class AdministracionController {
     return this.catalogos.eliminarGenero(id);
   }
 
+  // --- Situaciones jurídicas -----------------------------------------------------------
+
+  @Get('situaciones-juridicas')
+  situacionesJuridicas() {
+    return this.catalogos.situacionesJuridicas();
+  }
+
+  @Post('situaciones-juridicas')
+  crearSituacionJuridica(@Body() dto: NombreDto) {
+    return this.catalogos.guardarSituacionJuridica(dto.nombre);
+  }
+
+  @Patch('situaciones-juridicas/:id')
+  actualizarSituacionJuridica(@Param('id', ParseIntPipe) id: number, @Body() dto: NombreDto) {
+    return this.catalogos.guardarSituacionJuridica(dto.nombre, id);
+  }
+
+  @Delete('situaciones-juridicas/:id')
+  eliminarSituacionJuridica(@Param('id', ParseIntPipe) id: number) {
+    return this.catalogos.eliminarSituacionJuridica(id);
+  }
+
   // --- Contadores ----------------------------------------------------------------------
 
   @Get('contadores')

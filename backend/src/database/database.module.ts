@@ -31,6 +31,7 @@ import { SolicitudUser } from './models/solicitud-user.model';
 import { Documento } from './models/documento.model';
 import { Suspencion } from './models/suspencion.model';
 import { TokenConsulta } from './models/token-consulta.model';
+import { SolicitudDatosFormato } from './models/solicitud-datos-formato.model';
 
 export const MODELOS = [
   Institucion,
@@ -64,6 +65,7 @@ export const MODELOS = [
   Documento,
   Suspencion,
   TokenConsulta,
+  SolicitudDatosFormato,
 ];
 
 // Registra todos los modelos de la base de amnistía; los módulos de dominio solo inyectan los que usan.

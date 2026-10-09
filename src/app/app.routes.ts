@@ -37,6 +37,10 @@ export const routes: Routes = [
     path: 'acuse/:uuid',
     loadComponent: () => import('./features/acuse/ver-acuse').then((m) => m.VerAcuse),
   },
+  {
+    path: 'formato/:uuid',
+    loadComponent: () => import('./features/acuse/ver-formato').then((m) => m.VerFormato),
+  },
   // Sistema interno.
   {
     path: '',

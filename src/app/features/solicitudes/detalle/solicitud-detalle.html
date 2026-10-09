@@ -81,8 +81,33 @@
             <div><dt>CURP</dt><dd>{{ s.beneficiario.curp || '—' }}</dd></div>
             <div><dt>Fecha de nacimiento</dt><dd>{{ s.beneficiario.fechaNacimiento ? (s.beneficiario.fechaNacimiento | date: 'dd/MM/yyyy') : '—' }}</dd></div>
             <div><dt>Género</dt><dd>{{ s.beneficiario.genero || '—' }}</dd></div>
+            <div><dt>Nacionalidad</dt><dd>{{ s.beneficiario.nacionalidad || '—' }}</dd></div>
           </dl>
         </div>
+        @if (datosAdicionales(s.datosFormato); as adicionales) {
+          @if (adicionales.length) {
+            <div class="panel">
+              <h2 class="panel__titulo"><app-icono nombre="info" /> Datos adicionales del beneficiario</h2>
+              <dl class="datos">
+                @for (d of adicionales; track d.etiqueta) {
+                  <div><dt>{{ d.etiqueta }}</dt><dd>{{ d.valor }}</dd></div>
+                }
+              </dl>
+            </div>
+          }
+        }
+        @if (datosProceso(s.datosFormato); as proceso) {
+          @if (proceso.length) {
+            <div class="panel">
+              <h2 class="panel__titulo"><app-icono nombre="balanza" /> Libertad y proceso penal</h2>
+              <dl class="datos">
+                @for (d of proceso; track d.etiqueta) {
+                  <div><dt>{{ d.etiqueta }}</dt><dd>{{ d.valor }}</dd></div>
+                }
+              </dl>
+            </div>
+          }
+        }
         <div class="panel">
           <h2 class="panel__titulo"><app-icono nombre="balanza" /> Detalles de la solicitud</h2>
           <dl class="datos">
@@ -120,6 +145,7 @@
               <div><dt>Parentesco con el beneficiario</dt><dd>{{ s.solicitante.parentesco || 'Sin relación' }}</dd></div>
             } @else {
               <div><dt>RFC</dt><dd>{{ s.solicitante.rfc || '—' }}</dd></div>
+              <div><dt>Titular o representante legal</dt><dd>{{ titularOrganismo(s.datosFormato) || '—' }}</dd></div>
             }
           </dl>
         </div>

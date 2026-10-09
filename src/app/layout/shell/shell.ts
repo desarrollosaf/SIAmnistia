@@ -32,6 +32,7 @@ const ADMINISTRACION: NavItem = {
     { label: 'Delitos', route: '/administracion/delitos' },
     { label: 'Modalidades de delitos', route: '/administracion/modalidades' },
     { label: 'Géneros', route: '/administracion/generos' },
+    { label: 'Situaciones jurídicas', route: '/administracion/situaciones-juridicas' },
     { label: 'Folios (contadores)', route: '/administracion/contadores' },
   ],
 };

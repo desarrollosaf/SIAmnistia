@@ -8,6 +8,8 @@ import { Delito } from '../database/models/delito.model';
 import { ModalidadDelito } from '../database/models/modalidad-delito.model';
 import { Genero } from '../database/models/genero.model';
 import { Persona } from '../database/models/persona.model';
+import { SituacionJuridica } from '../database/models/situacion-juridica.model';
+import { Solicitud } from '../database/models/solicitud.model';
 import { Contador } from '../database/models/contador.model';
 import { TipoContador } from '../database/models/tipo-contador.model';
 import { ROL } from '../common/amnistia.constants';
@@ -25,6 +27,8 @@ export class CatalogosAdminService {
     @InjectModel(ModalidadDelito) private readonly modalidadModel: typeof ModalidadDelito,
     @InjectModel(Genero) private readonly generoModel: typeof Genero,
     @InjectModel(Persona) private readonly personaModel: typeof Persona,
+    @InjectModel(SituacionJuridica) private readonly situacionModel: typeof SituacionJuridica,
+    @InjectModel(Solicitud) private readonly solicitudModel: typeof Solicitud,
     @InjectModel(Contador) private readonly contadorModel: typeof Contador,
   ) {}
 
@@ -148,6 +152,35 @@ export class CatalogosAdminService {
     return { ok: true };
   }
 
+  // --- Situaciones jurídicas -----------------------------------------------------------
+
+  async situacionesJuridicas() {
+    const filas = await this.situacionModel.findAll({ order: [['id', 'ASC']] });
+    const total = (id: number) => this.solicitudModel.count({ where: { situacion_juridica_id: id }, paranoid: false });
+    return Promise.all(filas.map(async (f) => ({ id: f.id, nombre: f.nombre, solicitudes: await total(f.id) })));
+  }
+
+  async guardarSituacionJuridica(nombre: string, id?: number) {
+    if (!id) return this.situacionModel.create({ nombre });
+    const fila = await this.existe(this.situacionModel.findByPk(id), 'la situación jurídica');
+    if (esSituacionProtegida(fila.nombre)) {
+      throw new ConflictException('La situación "Otro" no se puede renombrar: el formulario público depende de ella');
+    }
+    return fila.update({ nombre });
+  }
+
+  async eliminarSituacionJuridica(id: number) {
+    const fila = await this.existe(this.situacionModel.findByPk(id), 'la situación jurídica');
+    if (esSituacionProtegida(fila.nombre)) {
+      throw new ConflictException('La situación "Otro" no se puede eliminar: el formulario público depende de ella');
+    }
+    if (await this.solicitudModel.count({ where: { situacion_juridica_id: id }, paranoid: false })) {
+      throw new ConflictException('La situación jurídica ya se usa en solicitudes registradas; no se puede eliminar');
+    }
+    await fila.destroy();
+    return { ok: true };
+  }
+
   // --- Contadores (folios) ---------------------------------------------------------------
 
   async contadores() {
@@ -171,4 +204,9 @@ export class CatalogosAdminService {
 /** Evita que el delito "OTRO" desaparezca: el formulario público depende de él. */
 export function esDelitoProtegido(delito: string) {
   return delito.trim().toUpperCase() === 'OTRO';
+}
+
+/** "Otro" pide especificar la situación en el formulario público, por eso no se puede renombrar ni borrar. */
+export function esSituacionProtegida(nombre: string) {
+  return nombre.trim().toUpperCase() === 'OTRO';
 }

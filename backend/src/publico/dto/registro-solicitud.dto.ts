@@ -1,7 +1,7 @@
 import { Transform, Type } from 'class-transformer';
 import {
-  ArrayMinSize, IsArray, IsBoolean, IsDateString, IsEmail, IsInt, IsOptional, IsString,
-  Matches, MaxLength, MinLength, ValidateNested,
+  ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsDateString, IsEmail, IsIn, IsInt, IsNumber, IsOptional, IsString,
+  Matches, Max, MaxLength, Min, MinLength, ValidateNested,
 } from 'class-validator';
 
 const mayusculas = ({ value }: { value: unknown }) =>
@@ -29,6 +29,20 @@ export class SolicitanteDto {
 
   @IsOptional() @IsString() @MaxLength(13) @Transform(mayusculas)
   rfc?: string;
+
+  // Persona jurídica colectiva: titular o representante legal del organismo y descripción de la
+  // documental que lo acredita como tal.
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  titularNombre?: string;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  titularPrimerApellido?: string;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  titularSegundoApellido?: string;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(recortar)
+  acreditacionDescripcion?: string;
 
   @IsOptional() @Type(() => Number) @IsInt()
   generoId?: number;
@@ -162,6 +176,114 @@ export class DetalleSolicitudDto {
   procedimientoAbreviado!: boolean;
 }
 
+/** Datos del beneficiario que completan el formato "Solicitud de amnistía"; todos opcionales. */
+export class DatosFormatoDto {
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  estadoSeEncuentra?: string;
+
+  @IsOptional() @IsDateString()
+  fechaComisionDelito?: string;
+
+  @IsOptional() @IsIn(['INDIGENA', 'AFROMEXICANA', 'NINGUNA'])
+  comunidad?: string;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  comunidadIndigenaCual?: string;
+
+  @IsOptional() @IsBoolean()
+  interprete?: boolean;
+
+  @IsOptional() @IsBoolean()
+  discapacidad?: boolean;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  discapacidadCual?: string;
+
+  @IsOptional() @IsBoolean()
+  enfermedadCronica?: boolean;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  enfermedadCronicaCual?: string;
+
+  @IsOptional() @IsString() @MaxLength(2000) @Transform(recortar)
+  ocupacionPrevia?: string;
+
+  @IsOptional() @IsString() @MaxLength(2000) @Transform(recortar)
+  dependientesEconomicos?: string;
+
+  @IsOptional() @IsIn(['PRIVADO', 'NO_PRIVADO', 'MEDIDA_SEGURIDAD'])
+  situacionLibertad?: string;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  medidaSeguridadCual?: string;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  investigacionNumero?: string;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  investigacionAgencia?: string;
+
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(100)
+  penaAnios?: number;
+
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(100)
+  penaMeses?: number;
+
+  @IsOptional() @IsBoolean()
+  multa?: boolean;
+
+  @IsOptional() @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) @Min(0)
+  multaMonto?: number;
+
+  @IsOptional() @IsBoolean()
+  apelacion?: boolean;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  apelacionToca?: string;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  apelacionTribunal?: string;
+
+  @IsOptional() @IsIn(['CONFIRMO', 'MODIFICO', 'REVOCO'])
+  apelacionResolucion?: string;
+
+  @IsOptional() @IsBoolean()
+  penaModificada?: boolean;
+
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(100)
+  penaCompurgarAnios?: number;
+
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(100)
+  penaCompurgarMeses?: number;
+
+  @IsOptional() @IsBoolean()
+  amparo?: boolean;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  amparoEfectos?: string;
+
+  @IsOptional() @IsBoolean()
+  amparoConcedido?: boolean;
+
+  @IsOptional() @IsBoolean()
+  sentenciadoAntesMismoDelito?: boolean;
+
+  @IsOptional() @IsBoolean()
+  otroProceso?: boolean;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  otroProcesoExpediente?: string;
+
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
+  otroProcesoJuzgado?: string;
+}
+
+/** Descripción de cada documento "Otro" adjunto; va en el mismo orden que los archivos del campo otros_documentos. */
+export class OtroDocumentoDto {
+  @IsString() @MinLength(1, { message: 'Describe cada documento "Otro" que adjuntes' }) @MaxLength(191) @Transform(recortar)
+  descripcion!: string;
+}
+
 /** Datos del formulario público; viajan como JSON en el campo "datos" del multipart. */
 export class RegistroSolicitudDto {
   @ValidateNested() @Type(() => SolicitanteDto)
@@ -179,6 +301,12 @@ export class RegistroSolicitudDto {
 
   @ValidateNested() @Type(() => DetalleSolicitudDto)
   solicitud!: DetalleSolicitudDto;
+
+  @IsOptional() @ValidateNested() @Type(() => DatosFormatoDto)
+  datosFormato?: DatosFormatoDto;
+
+  @IsOptional() @IsArray() @ArrayMaxSize(10) @ValidateNested({ each: true }) @Type(() => OtroDocumentoDto)
+  otrosDocumentos?: OtroDocumentoDto[];
 
   @IsOptional() @IsString()
   observacionesHechos?: string;

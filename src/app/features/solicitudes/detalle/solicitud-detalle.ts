@@ -9,6 +9,7 @@ import { CatalogosService, Opcion } from '../../../core/services/catalogos.servi
 import { ToastService } from '../../../core/services/toast.service';
 import { mensajeError } from '../../../core/interceptors/auth.interceptor';
 import { claseEstatus } from '../../../shared/archivos';
+import { datosAdicionales, datosProceso, titularOrganismo } from './datos-formato';
 import { Icono } from '../../../shared/icono/icono';
 import { Modal } from '../../../shared/modal/modal';
 import { ArchivoPdf } from '../../../shared/archivo-pdf/archivo-pdf';
@@ -80,6 +81,9 @@ export class SolicitudDetalle implements OnInit {
   protected readonly pestana = signal<Pestana>('resumen');
   protected readonly editando = signal(false);
   protected readonly claseEstatus = claseEstatus;
+  protected readonly datosAdicionales = datosAdicionales;
+  protected readonly datosProceso = datosProceso;
+  protected readonly titularOrganismo = titularOrganismo;
 
   // Modal de acciones que llevan documento.
   protected readonly accion = signal<AccionArchivo | null>(null);
