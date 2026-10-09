@@ -37,6 +37,46 @@ export interface AccionesSolicitud {
   concluir: boolean;
 }
 
+/** Datos complementarios del beneficiario (y titular del organismo); solo llegan las respuestas capturadas. */
+export interface DatosFormatoDetalle {
+  titularNombre?: string;
+  titularPrimerApellido?: string;
+  titularSegundoApellido?: string;
+  estadoSeEncuentra?: string;
+  fechaComisionDelito?: string;
+  comunidad?: 'INDIGENA' | 'AFROMEXICANA' | 'NINGUNA';
+  comunidadIndigenaCual?: string;
+  interprete?: boolean;
+  discapacidad?: boolean;
+  discapacidadCual?: string;
+  enfermedadCronica?: boolean;
+  enfermedadCronicaCual?: string;
+  ocupacionPrevia?: string;
+  dependientesEconomicos?: string;
+  situacionLibertad?: 'PRIVADO' | 'NO_PRIVADO' | 'MEDIDA_SEGURIDAD';
+  medidaSeguridadCual?: string;
+  investigacionNumero?: string;
+  investigacionAgencia?: string;
+  penaAnios?: number;
+  penaMeses?: number;
+  multa?: boolean;
+  multaMonto?: string | number;
+  apelacion?: boolean;
+  apelacionToca?: string;
+  apelacionTribunal?: string;
+  apelacionResolucion?: 'CONFIRMO' | 'MODIFICO' | 'REVOCO';
+  penaModificada?: boolean;
+  penaCompurgarAnios?: number;
+  penaCompurgarMeses?: number;
+  amparo?: boolean;
+  amparoEfectos?: string;
+  amparoConcedido?: boolean;
+  sentenciadoAntesMismoDelito?: boolean;
+  otroProceso?: boolean;
+  otroProcesoExpediente?: string;
+  otroProcesoJuzgado?: string;
+}
+
 export interface SolicitudDetalle {
   id: number;
   nus: string;
@@ -54,7 +94,9 @@ export interface SolicitudDetalle {
     fechaNacimiento: string | null;
     genero: string;
     curp: string | null;
+    nacionalidad: string;
   };
+  datosFormato: DatosFormatoDetalle | null;
   solicitante: {
     personaFisica: boolean;
     nombre: string;

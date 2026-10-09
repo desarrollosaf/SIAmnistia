@@ -324,3 +324,32 @@
   &__ayuda { margin: 0 0 .55rem; font-size: .78rem; color: var(--brand-muted); }
   .modalidades { max-height: none; overflow: visible; padding: 0; }
 }
+
+// Datos complementarios del beneficiario
+.complemento {
+  margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--brand-border);
+  &__intro {
+    display: flex; align-items: flex-start; gap: .6rem; margin: 0 0 1.1rem; padding: .75rem 1rem; border-radius: 12px;
+    background: var(--brand-primary-soft); color: var(--brand-ink); font-size: .88rem;
+  }
+  &__titulo {
+    margin: 1.5rem 0 .9rem; padding-bottom: .45rem; border-bottom: 1px solid var(--brand-border);
+    font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--brand-primary);
+    small { font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--brand-muted); }
+  }
+}
+
+// Documentos "Otro": una fila por archivo, con su descripción
+.otros {
+  display: grid; gap: .75rem; padding: 1rem; border: 1px solid var(--brand-border); border-radius: 14px; background: var(--brand-bg);
+  &__fila { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto; gap: .75rem; align-items: center; }
+  &__num {
+    display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--brand-primary); color: #fff; font-size: .78rem; font-weight: 700;
+  }
+  .btn { justify-self: start; }
+  @media (max-width: 767.98px) {
+    &__fila { grid-template-columns: auto minmax(0, 1fr) auto; }
+    &__archivo, &__descripcion { grid-column: 2; }
+  }
+}

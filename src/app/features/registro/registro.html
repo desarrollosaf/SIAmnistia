@@ -134,6 +134,11 @@
                   <span class="form-label d-block">Acta de nacimiento (PDF) <span class="req">*</span></span>
                   <app-archivo-pdf [(archivo)]="acta" [invalido]="intentoPaso().includes(0)" />
                 </div>
+              } @else {
+                <div class="col-md-8">
+                  <span class="form-label d-block">Documental pública o escrito firmado por la persona interesada mediante el cual designa al representante legal para el trámite de amnistía (PDF, opcional)</span>
+                  <app-archivo-pdf [(archivo)]="designacion" />
+                </div>
               }
             </div>
           } @else {
@@ -145,6 +150,31 @@
               <div class="col-md-4">
                 <label class="form-label" for="p-rfc">RFC <span class="req">*</span></label>
                 <input id="p-rfc" class="form-control mayusculas" formControlName="rfc" minlength="9" maxlength="13" />
+              </div>
+              <div class="col-12"><h3 class="complemento__titulo mt-2">Titular o representante legal del organismo</h3></div>
+              <div class="col-md-4">
+                <label class="form-label" for="p-titular-nombre">Nombre(s) <span class="req">*</span></label>
+                <input id="p-titular-nombre" class="form-control mayusculas" formControlName="titularNombre" maxlength="48" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="p-titular-pa">Primer apellido <span class="req">*</span></label>
+                <input id="p-titular-pa" class="form-control mayusculas" formControlName="titularPrimerApellido" maxlength="48" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="p-titular-sa">Segundo apellido</label>
+                <input id="p-titular-sa" class="form-control mayusculas" formControlName="titularSegundoApellido" maxlength="48" />
+              </div>
+              <div class="col-md-6">
+                <span class="form-label d-block">Documental pública o escrito firmado por la persona interesada mediante el cual autoriza al organismo a realizar el trámite en su representación (PDF, opcional)</span>
+                <app-archivo-pdf [(archivo)]="autorizacionOrganismo" />
+              </div>
+              <div class="col-md-6">
+                <span class="form-label d-block">Copia simple o certificada de la documental que te acredita como titular o representante legal del organismo (PDF, opcional)</span>
+                <app-archivo-pdf [(archivo)]="acreditacionTitular" />
+                @if (acreditacionTitular()) {
+                  <label class="form-label mt-2" for="p-acreditacion">¿Qué documento es? <span class="req">*</span></label>
+                  <input id="p-acreditacion" class="form-control" formControlName="acreditacionDescripcion" maxlength="191" placeholder="Ej. Nombramiento, poder notarial…" />
+                }
               </div>
             </div>
           }
@@ -259,6 +289,254 @@
             <span class="form-label d-block">Constancia de CURP (PDF) <span class="req">*</span></span>
             <app-archivo-pdf [(archivo)]="curpArchivo" [invalido]="intentoPaso().includes(3)" />
           </div>
+        </div>
+      </form>
+
+      <!-- Paso 4 (continuación): datos complementarios del beneficiario para el formato de solicitud -->
+      <form [formGroup]="complemento" [hidden]="paso() !== 3" (submit)="$event.preventDefault()" class="complemento">
+        <p class="complemento__intro">
+          <app-icono nombre="ayuda" /> Los siguientes datos son <strong>opcionales</strong>: captura los que conozcas. Se incluyen en el formato de solicitud que se genera junto con tu acuse.
+        </p>
+
+        <h3 class="complemento__titulo">Datos adicionales del beneficiario</h3>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="c-estadoSeEncuentra">¿En qué estado se encuentra?</label>
+            <select id="c-estadoSeEncuentra" class="form-select" formControlName="estadoSeEncuentra">
+              <option value="">Selecciona una opción</option>
+              @for (o of catalogos()?.entidades ?? []; track o.id) { <option [value]="o.nombre">{{ o.nombre }}</option> }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="c-fechaComisionDelito">Fecha en que fue cometido el delito</label>
+            <input id="c-fechaComisionDelito" type="date" class="form-control" formControlName="fechaComisionDelito" [max]="fechaMax" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="c-comunidad">En términos del art. 2 de la Constitución Política de los Estados Unidos Mexicanos, ¿perteneces a una comunidad?</label>
+            <select id="c-comunidad" class="form-select" formControlName="comunidad">
+              <option value="">Selecciona una opción</option>
+              <option value="INDIGENA">Indígena</option>
+              <option value="AFROMEXICANA">Afromexicana</option>
+              <option value="NINGUNA">Ninguna</option>
+            </select>
+          </div>
+          @if (comp().comunidad === 'INDIGENA') {
+          <div class="col-md-6">
+            <label class="form-label" for="c-comunidadIndigenaCual">¿Cuál comunidad indígena?</label>
+            <input id="c-comunidadIndigenaCual" type="text" class="form-control mayusculas" formControlName="comunidadIndigenaCual" maxlength="191" />
+          </div>
+          }
+          <div class="col-md-6">
+            <span class="form-label d-block">¿Contaste con un intérprete durante tu proceso?</span>
+            <app-si-no formControlName="interprete" etiqueta="¿Contaste con un intérprete durante tu proceso?" />
+          </div>
+          <div class="col-md-6">
+            <span class="form-label d-block">¿Tienes una discapacidad permanente?</span>
+            <app-si-no formControlName="discapacidad" etiqueta="¿Tienes una discapacidad permanente?" />
+          </div>
+          @if (comp().discapacidad) {
+          <div class="col-md-6">
+            <label class="form-label" for="c-discapacidadCual">¿Cuál discapacidad?</label>
+            <input id="c-discapacidadCual" type="text" class="form-control mayusculas" formControlName="discapacidadCual" maxlength="191" />
+          </div>
+          }
+          <div class="col-md-6">
+            <span class="form-label d-block">¿Tienes una enfermedad crónico-degenerativa?</span>
+            <app-si-no formControlName="enfermedadCronica" etiqueta="¿Tienes una enfermedad crónico-degenerativa?" />
+          </div>
+          @if (comp().enfermedadCronica) {
+          <div class="col-md-6">
+            <label class="form-label" for="c-enfermedadCronicaCual">¿Cuál enfermedad?</label>
+            <input id="c-enfermedadCronicaCual" type="text" class="form-control mayusculas" formControlName="enfermedadCronicaCual" maxlength="191" />
+          </div>
+          }
+          <div class="col-12">
+            <label class="form-label" for="c-ocupacionPrevia">Antes de cometer el delito por el cual solicitas el beneficio de amnistía, ¿a qué te dedicabas?</label>
+            <textarea id="c-ocupacionPrevia" class="form-control" rows="2" formControlName="ocupacionPrevia" maxlength="2000"></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="c-dependientesEconomicos">¿Cuántas y quiénes son las personas que dependen económicamente de usted?</label>
+            <textarea id="c-dependientesEconomicos" class="form-control" rows="2" formControlName="dependientesEconomicos" maxlength="2000"></textarea>
+          </div>
+        </div>
+
+        <h3 class="complemento__titulo">Libertad y situación en el proceso</h3>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="c-situacionLibertad">¿Te encuentras privada(o) de tu libertad?</label>
+            <select id="c-situacionLibertad" class="form-select" formControlName="situacionLibertad">
+              <option value="">Selecciona una opción</option>
+              <option value="PRIVADO">Sí</option>
+              <option value="NO_PRIVADO">No</option>
+              <option value="MEDIDA_SEGURIDAD">Bajo una medida de seguridad</option>
+            </select>
+          </div>
+          @if (comp().situacionLibertad === 'MEDIDA_SEGURIDAD') {
+          <div class="col-md-6">
+            <label class="form-label" for="c-medidaSeguridadCual">¿Cuál medida de seguridad?</label>
+            <input id="c-medidaSeguridadCual" type="text" class="form-control mayusculas" formControlName="medidaSeguridadCual" maxlength="191" />
+          </div>
+          }
+          <div class="col-md-6">
+            <label class="form-label" for="c-investigacionNumero">Si estás investigada(o): número de averiguación previa o carpeta de investigación</label>
+            <input id="c-investigacionNumero" type="text" class="form-control mayusculas" formControlName="investigacionNumero" maxlength="191" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="c-investigacionAgencia">Agencia del ministerio público, procuraduría o fiscalía que conoce del caso</label>
+            <input id="c-investigacionAgencia" type="text" class="form-control mayusculas" formControlName="investigacionAgencia" maxlength="191" />
+          </div>
+        </div>
+
+        <h3 class="complemento__titulo">Sentencia</h3>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label" for="c-penaAnios">Pena en tu sentencia: años</label>
+            <input id="c-penaAnios" type="number" class="form-control" formControlName="penaAnios" min="0" max="100" />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="c-penaMeses">Meses</label>
+            <input id="c-penaMeses" type="number" class="form-control" formControlName="penaMeses" min="0" max="100" />
+          </div>
+          <div class="col-md-6">
+            <span class="form-label d-block">¿La pena incluye el pago de una multa?</span>
+            <app-si-no formControlName="multa" etiqueta="¿La pena incluye el pago de una multa?" />
+          </div>
+          @if (comp().multa) {
+          <div class="col-md-6">
+            <label class="form-label" for="c-multaMonto">Monto de la multa (MXN)</label>
+            <input id="c-multaMonto" type="number" class="form-control" formControlName="multaMonto" min="0" step="0.01" />
+          </div>
+          }
+        </div>
+
+        <h3 class="complemento__titulo">Segunda instancia, amparo y otros procesos</h3>
+        <div class="row g-3">
+          <div class="col-12">
+            <span class="form-label d-block">¿Presentaste recurso de apelación contra tu sentencia?</span>
+            <app-si-no formControlName="apelacion" etiqueta="¿Presentaste recurso de apelación contra tu sentencia?" />
+          </div>
+          @if (comp().apelacion) {
+          <div class="col-md-6">
+            <label class="form-label" for="c-apelacionToca">Número de toca penal</label>
+            <input id="c-apelacionToca" type="text" class="form-control mayusculas" formControlName="apelacionToca" maxlength="191" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="c-apelacionTribunal">Tribunal que conoce</label>
+            <input id="c-apelacionTribunal" type="text" class="form-control mayusculas" formControlName="apelacionTribunal" maxlength="191" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="c-apelacionResolucion">Resolución de la apelación</label>
+            <select id="c-apelacionResolucion" class="form-select" formControlName="apelacionResolucion">
+              <option value="">Selecciona una opción</option>
+              <option value="CONFIRMO">Confirmó</option>
+              <option value="MODIFICO">Modificó</option>
+              <option value="REVOCO">Revocó</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <span class="form-label d-block">¿Se modificó la pena de prisión?</span>
+            <app-si-no formControlName="penaModificada" etiqueta="¿Se modificó la pena de prisión?" />
+          </div>
+          @if (comp().penaModificada) {
+          <div class="col-md-3">
+            <label class="form-label" for="c-penaCompurgarAnios">¿Cuántos años compurgarás en prisión? Años</label>
+            <input id="c-penaCompurgarAnios" type="number" class="form-control" formControlName="penaCompurgarAnios" min="0" max="100" />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="c-penaCompurgarMeses">Meses</label>
+            <input id="c-penaCompurgarMeses" type="number" class="form-control" formControlName="penaCompurgarMeses" min="0" max="100" />
+          </div>
+          }
+          }
+          <div class="col-12">
+            <span class="form-label d-block">¿Presentaste juicio de amparo contra tu sentencia?</span>
+            <app-si-no formControlName="amparo" etiqueta="¿Presentaste juicio de amparo contra tu sentencia?" />
+          </div>
+          @if (comp().amparo) {
+          <div class="col-md-6">
+            <label class="form-label" for="c-amparoEfectos">¿Para qué efectos?</label>
+            <input id="c-amparoEfectos" type="text" class="form-control mayusculas" formControlName="amparoEfectos" maxlength="191" />
+          </div>
+          <div class="col-md-6">
+            <span class="form-label d-block">¿La resolución te concedió el amparo?</span>
+            <app-si-no formControlName="amparoConcedido" etiqueta="¿La resolución te concedió el amparo?" />
+          </div>
+          }
+          <div class="col-12">
+            <span class="form-label d-block">¿Anteriormente fuiste sentenciado por el mismo delito por el que solicitas el beneficio de amnistía?</span>
+            <app-si-no formControlName="sentenciadoAntesMismoDelito" etiqueta="¿Anteriormente fuiste sentenciado por el mismo delito por el que solicitas el beneficio de amnistía?" />
+          </div>
+          <div class="col-12">
+            <span class="form-label d-block">¿Tienes otro proceso vinculado a tu persona?</span>
+            <app-si-no formControlName="otroProceso" etiqueta="¿Tienes otro proceso vinculado a tu persona?" />
+          </div>
+          @if (comp().otroProceso) {
+          <div class="col-md-6">
+            <label class="form-label" for="c-otroProcesoExpediente">En ese proceso, ¿cuál es el número de tu expediente?</label>
+            <input id="c-otroProcesoExpediente" type="text" class="form-control mayusculas" formControlName="otroProcesoExpediente" maxlength="191" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="c-otroProcesoJuzgado">En ese proceso, ¿cuál es el juzgado que conoce?</label>
+            <input id="c-otroProcesoJuzgado" type="text" class="form-control mayusculas" formControlName="otroProcesoJuzgado" maxlength="191" />
+          </div>
+          }
+        </div>
+
+        <h3 class="complemento__titulo">Documentación de apoyo <small>(PDF, opcional)</small></h3>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <span class="form-label d-block">Averiguación previa / carpeta de investigación</span>
+            <app-archivo-pdf [(archivo)]="averiguacionPrevia" />
+          </div>
+          <div class="col-md-6">
+            <span class="form-label d-block">Constancias de tu proceso penal ante el juez, sentencia de primera instancia, segunda instancia o amparo</span>
+            <app-archivo-pdf [(archivo)]="constanciasProceso" />
+          </div>
+          <div class="col-md-6">
+            <span class="form-label d-block">Documento que acredita la no reincidencia respecto al delito por el que solicitas el beneficio</span>
+            <app-archivo-pdf [(archivo)]="noReincidencia" />
+          </div>
+          <div class="col-md-6">
+            <span class="form-label d-block">Documento que acredita tu situación socioeconómica</span>
+            <app-archivo-pdf [(archivo)]="situacionSocioeconomica" />
+          </div>
+          <div class="col-md-6">
+            <span class="form-label d-block">Documento que acredita tu calidad de indígena</span>
+            <app-archivo-pdf [(archivo)]="calidadIndigena" />
+          </div>
+          <div class="col-12">
+            <label class="form-check">
+              <input class="form-check-input" type="checkbox" [checked]="usaOtros()" (change)="alternarOtros($any($event.target).checked)" />
+              <span class="form-check-label">Otro documento</span>
+            </label>
+          </div>
+          @if (usaOtros()) {
+            <div class="col-12">
+              <div class="otros">
+                @for (o of otros(); track o.id; let i = $index) {
+                  <div class="otros__fila">
+                    <span class="otros__num">{{ i + 1 }}</span>
+                    <div class="otros__archivo">
+                      <app-archivo-pdf [archivo]="o.archivo" (archivoChange)="cambiarOtro(o.id, { archivo: $event })" [invalido]="intentoPaso().includes(3) && !!o.descripcion.trim() && !o.archivo" />
+                    </div>
+                    <div class="otros__descripcion">
+                      <input
+                        class="form-control"
+                        [value]="o.descripcion"
+                        (input)="cambiarOtro(o.id, { descripcion: $any($event.target).value })"
+                        maxlength="191"
+                        placeholder="Descripción del documento"
+                        [class.is-invalid]="intentoPaso().includes(3) && !!o.archivo && !o.descripcion.trim()"
+                        [attr.aria-label]="'Descripción del documento ' + (i + 1)"
+                      />
+                    </div>
+                    <button type="button" class="icono-btn icono-btn--peligro" (click)="quitarOtro(o.id)" aria-label="Quitar documento"><app-icono nombre="basura" /></button>
+                  </div>
+                }
+                <button type="button" class="btn btn--outline btn--sm" (click)="agregarOtro()" [disabled]="otros().length >= 10"><app-icono nombre="mas" /> Agregar otro documento</button>
+              </div>
+            </div>
+          }
         </div>
       </form>
 

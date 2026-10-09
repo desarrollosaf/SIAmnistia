@@ -6,10 +6,20 @@ import { Usuario } from './usuario.model';
 export const DOC = {
   acuse: 'acuse.pdf',
   fichaTecnica: 'ficha_tecnica.pdf',
+  formatoSolicitud: 'formato_solicitud.pdf',
   verdadHechos: 'Verdad de hechos.pdf',
   observacionesHechos: 'observaciones hechos.pdf',
   informacionComplementaria: 'información complementaria.pdf',
   sentencia: 'sentencia.pdf',
+  designacionRepresentante: 'Designación de representante legal.pdf',
+  autorizacionOrganismo: 'Autorización al organismo.pdf',
+  acreditacionTitular: 'Acreditación del titular del organismo.pdf',
+  averiguacionPrevia: 'Averiguación previa.pdf',
+  constanciasProceso: 'Constancias del proceso penal.pdf',
+  noReincidencia: 'No reincidencia.pdf',
+  situacionSocioeconomica: 'Situación socioeconómica.pdf',
+  calidadIndigena: 'Calidad de indígena.pdf',
+  otroDocumento: 'Otro documento.pdf',
 } as const;
 
 @Table({ tableName: 'documentos', ...OPCIONES_TABLA_PARANOID })

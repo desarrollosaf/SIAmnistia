@@ -1,5 +1,5 @@
 import {
-  Body, Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Res, UploadedFiles,
+  Body, Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Res, UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -26,8 +26,17 @@ export class PublicoController {
         { name: 'identificacion', maxCount: 1 },
         { name: 'curp', maxCount: 1 },
         { name: 'acta_nacimiento', maxCount: 1 },
+        { name: 'designacion_representante', maxCount: 1 },
+        { name: 'autorizacion_organismo', maxCount: 1 },
+        { name: 'acreditacion_titular', maxCount: 1 },
         { name: 'sentencia', maxCount: 1 },
         { name: 'verdad_hechos', maxCount: 1 },
+        { name: 'averiguacion_previa', maxCount: 1 },
+        { name: 'constancias_proceso', maxCount: 1 },
+        { name: 'no_reincidencia', maxCount: 1 },
+        { name: 'situacion_socioeconomica', maxCount: 1 },
+        { name: 'calidad_indigena', maxCount: 1 },
+        { name: 'otros_documentos', maxCount: 10 },
       ],
       SOLO_PDF,
     ),
@@ -38,10 +47,22 @@ export class PublicoController {
   }
 
   @Get('acuse/:uuid')
-  async acuse(@Param('uuid') uuid: string, @Res() res: Response) {
-    const { nombre, contenido } = await this.publicoService.acuse(uuid);
-    res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `inline; filename="${nombre}"` });
-    res.send(contenido);
+  async acuse(@Param('uuid') uuid: string, @Query('descargar') descargar: string | undefined, @Res() res: Response) {
+    this.enviarPdf(res, await this.publicoService.acuse(uuid), descargar !== undefined);
+  }
+
+  @Get('formato/:uuid')
+  async formato(@Param('uuid') uuid: string, @Query('descargar') descargar: string | undefined, @Res() res: Response) {
+    this.enviarPdf(res, await this.publicoService.formato(uuid), descargar !== undefined);
+  }
+
+  /** "inline" lo abre en el navegador; con ?descargar el navegador lo guarda como archivo. */
+  private enviarPdf(res: Response, pdf: { nombre: string; contenido: Buffer }, descargar: boolean) {
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `${descargar ? 'attachment' : 'inline'}; filename="${pdf.nombre}"`,
+    });
+    res.send(pdf.contenido);
   }
 
   @Get('validar-acuse/:cadena')

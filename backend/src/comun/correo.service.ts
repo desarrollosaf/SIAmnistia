@@ -53,14 +53,16 @@ export class CorreoService {
     }
   }
 
-  acuseRecibido(nombre: string, uuidAcuse: string): string {
+  acuseRecibido(nombre: string, uuidAcuse: string, uuidFormato: string | null = null): string {
     const liga = `${this.appUrl}/acuse/${uuidAcuse}`;
+    const ligaFormato = uuidFormato ? `${this.appUrl}/formato/${uuidFormato}` : null;
     return `
       <p>Estimado(a) <strong>${escapar(nombre)}</strong>:</p>
-      <p>Recibimos tu solicitud para el proceso de amnistía. Con el siguiente botón puedes ver tu acuse de recibo.</p>
+      <p>Recibimos tu solicitud para el proceso de amnistía. Con ${ligaFormato ? 'los siguientes botones puedes ver tu acuse de recibo y la solicitud de amnistía que se generó con tus datos' : 'el siguiente botón puedes ver tu acuse de recibo'}.</p>
       ${boton(liga, 'Ver acuse')}
+      ${ligaFormato ? boton(ligaFormato, 'Ver solicitud de amnistía') : ''}
       ${boton(`${this.appUrl}/assets/manual-amnistia.pdf`, 'Manual de usuario', true)}
-      <p class="nota">Si no puedes ver el botón, copia y pega esta liga en tu navegador:<br>${liga}</p>`;
+      <p class="nota">Si no puedes ver el botón, copia y pega esta liga en tu navegador:<br>${liga}${ligaFormato ? `<br>${ligaFormato}` : ''}</p>`;
   }
 
   turnoInstitucion(institucionId: number, solicitante: string, nus: string): string {

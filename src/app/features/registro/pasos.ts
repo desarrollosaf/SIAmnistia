@@ -44,6 +44,7 @@ export const PASOS: PasoRegistro[] = [
       'El beneficiario es la persona privada de la libertad para quien se solicita la amnistía.',
       'Escribe su nombre y apellidos completos, su fecha de nacimiento, su género y su CURP de 18 caracteres.',
       'Adjunta la constancia de CURP del beneficiario en formato PDF.',
+      'Más abajo puedes capturar datos adicionales (comunidad, salud, situación en el proceso, apelación, amparo) y adjuntar documentos de apoyo. Son opcionales: llena los que conozcas; el formato de solicitud los incluye en el acuse.',
     ],
   },
   {

@@ -15,6 +15,7 @@ import { mensajeError } from '../../core/interceptors/auth.interceptor';
 import { ArchivoPdf } from '../../shared/archivo-pdf/archivo-pdf';
 import { Icono } from '../../shared/icono/icono';
 import { Modal } from '../../shared/modal/modal';
+import { SiNo } from '../../shared/si-no/si-no';
 import { PASOS } from './pasos';
 
 const REGEX_CURP =
@@ -26,6 +27,12 @@ interface DelitoCarpeta {
   modalidadId: number | null;
   delitoOtro: string;
   texto: string;
+}
+
+interface OtroDocumento {
+  id: number;
+  archivo: File | null;
+  descripcion: string;
 }
 
 interface Carpeta {
@@ -46,7 +53,7 @@ const esOtro = (texto: string | undefined) => (texto ?? '').trim().toUpperCase()
 @Component({
   selector: 'app-registro',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, ArchivoPdf, Icono, Modal],
+  imports: [ReactiveFormsModule, RouterLink, ArchivoPdf, Icono, Modal, SiNo],
   templateUrl: './registro.html',
   styleUrl: './registro.scss',
 })
@@ -72,9 +79,21 @@ export class Registro {
   // Archivos.
   protected readonly identificacion = signal<File | null>(null);
   protected readonly acta = signal<File | null>(null);
+  protected readonly designacion = signal<File | null>(null);
+  protected readonly autorizacionOrganismo = signal<File | null>(null);
+  protected readonly acreditacionTitular = signal<File | null>(null);
   protected readonly curpArchivo = signal<File | null>(null);
   protected readonly sentencia = signal<File | null>(null);
   protected readonly verdadHechos = signal<File | null>(null);
+  protected readonly averiguacionPrevia = signal<File | null>(null);
+  protected readonly constanciasProceso = signal<File | null>(null);
+  protected readonly noReincidencia = signal<File | null>(null);
+  protected readonly situacionSocioeconomica = signal<File | null>(null);
+  protected readonly calidadIndigena = signal<File | null>(null);
+  // Documentos "Otro": se marca la casilla y se agrega uno o más archivos, cada uno con su descripción.
+  protected readonly usaOtros = signal(false);
+  protected readonly otros = signal<OtroDocumento[]>([]);
+  private siguienteOtro = 0;
   protected readonly intentoPaso = signal<number[]>([]);
 
   // Carpetas y delitos.
@@ -92,6 +111,10 @@ export class Registro {
     segundoApellido: [''],
     nombreInstitucion: [''],
     rfc: [''],
+    titularNombre: [''],
+    titularPrimerApellido: [''],
+    titularSegundoApellido: [''],
+    acreditacionDescripcion: [''],
     generoId: [0],
     generoOtro: [''],
     relacion: [false],
@@ -125,6 +148,43 @@ export class Registro {
     curp: ['', [Validators.required, curpValida]],
   });
 
+  // Datos complementarios del beneficiario (formato de solicitud). Todos opcionales; true/false/null en los "sí / no".
+  protected readonly complemento = this.fb.nonNullable.group({
+    estadoSeEncuentra: [''],
+    fechaComisionDelito: [''],
+    comunidad: [''],
+    comunidadIndigenaCual: [''],
+    interprete: [null as boolean | null],
+    discapacidad: [null as boolean | null],
+    discapacidadCual: [''],
+    enfermedadCronica: [null as boolean | null],
+    enfermedadCronicaCual: [''],
+    ocupacionPrevia: [''],
+    dependientesEconomicos: [''],
+    situacionLibertad: [''],
+    medidaSeguridadCual: [''],
+    investigacionNumero: [''],
+    investigacionAgencia: [''],
+    penaAnios: [null as number | null, [Validators.min(0), Validators.max(100)]],
+    penaMeses: [null as number | null, [Validators.min(0), Validators.max(100)]],
+    multa: [null as boolean | null],
+    multaMonto: [null as number | null, Validators.min(0)],
+    apelacion: [null as boolean | null],
+    apelacionToca: [''],
+    apelacionTribunal: [''],
+    apelacionResolucion: [''],
+    penaModificada: [null as boolean | null],
+    penaCompurgarAnios: [null as number | null, [Validators.min(0), Validators.max(100)]],
+    penaCompurgarMeses: [null as number | null, [Validators.min(0), Validators.max(100)]],
+    amparo: [null as boolean | null],
+    amparoEfectos: [''],
+    amparoConcedido: [null as boolean | null],
+    sentenciadoAntesMismoDelito: [null as boolean | null],
+    otroProceso: [null as boolean | null],
+    otroProcesoExpediente: [''],
+    otroProcesoJuzgado: [''],
+  });
+
   protected readonly nuevaCarpeta = this.fb.nonNullable.group({
     carpeta: [''],
     razonSolicitudId: [0],
@@ -155,6 +215,7 @@ export class Registro {
   private readonly beneficiarioValor = signal(this.beneficiario.getRawValue());
   private readonly solicitudValor = signal(this.solicitud.getRawValue());
   protected readonly delitoValor = signal(this.nuevoDelito.getRawValue());
+  protected readonly comp = signal(this.complemento.getRawValue());
   protected readonly conoceUbicacion = signal(false);
 
   protected readonly esFisica = computed(() => this.nombreDe(this.catalogos()?.tiposSolicitante, this.peticionarioValor().tipoSolicitanteId).toUpperCase().startsWith('F'));
@@ -195,6 +256,7 @@ export class Registro {
     cambios(this.beneficiario, () => this.beneficiarioValor.set(this.beneficiario.getRawValue()));
     cambios(this.solicitud, () => this.solicitudValor.set(this.solicitud.getRawValue()));
     cambios(this.nuevoDelito, () => this.delitoValor.set(this.nuevoDelito.getRawValue()));
+    cambios(this.complemento, () => this.comp.set(this.complemento.getRawValue()));
     this.nuevaCarpeta.controls.conoceUbicacion.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((v) => this.conoceUbicacion.set(v));
@@ -291,6 +353,10 @@ export class Registro {
         } else {
           if (v.nombreInstitucion.trim().length < 2) return fallar('Captura el nombre de la institución u organismo.');
           if (v.rfc.trim().length < 9) return fallar('Captura el RFC de la institución u organismo.');
+          if (v.titularNombre.trim().length < 2 || v.titularPrimerApellido.trim().length < 2) {
+            return fallar('Captura el nombre y primer apellido del titular o representante legal del organismo.');
+          }
+          if (this.acreditacionTitular() && !v.acreditacionDescripcion.trim()) return fallar('Describe el documento que acredita al titular o representante legal.');
         }
         if (!this.identificacion()) return fallar('Adjunta la identificación oficial o poder notarial.');
         return true;
@@ -306,6 +372,13 @@ export class Registro {
         if (this.beneficiario.invalid) return fallar('Revisa los datos del beneficiario.');
         if (this.generoOtroBeneficiario() && !this.beneficiario.getRawValue().generoOtro.trim()) return fallar('Especifica el género del beneficiario.');
         if (!this.curpArchivo()) return fallar('Adjunta la constancia de CURP del beneficiario.');
+        if (this.otrosCapturados().some((o) => !o.descripcion.trim()) || this.otros().some((o) => o.descripcion.trim() && !o.archivo)) {
+          return fallar('Cada documento "Otro" necesita su archivo PDF y su descripción.');
+        }
+        if (this.complemento.invalid) {
+          this.complemento.markAllAsTouched();
+          return fallar('Revisa los datos adicionales del beneficiario (los números no pueden ser negativos).');
+        }
         return true;
       }
       case 4:
@@ -512,6 +585,10 @@ export class Registro {
         segundoApellido: fisica && p.segundoApellido ? p.segundoApellido : undefined,
         nombreInstitucion: fisica ? undefined : p.nombreInstitucion,
         rfc: fisica ? undefined : p.rfc,
+        titularNombre: fisica ? undefined : p.titularNombre,
+        titularPrimerApellido: fisica ? undefined : p.titularPrimerApellido,
+        titularSegundoApellido: fisica ? undefined : p.titularSegundoApellido || undefined,
+        acreditacionDescripcion: !fisica && this.acreditacionTitular() ? p.acreditacionDescripcion : undefined,
         generoId: fisica ? Number(p.generoId) : undefined,
         generoOtro: fisica && this.generoOtroPeticionario() ? p.generoOtro : undefined,
         relacion: fisica && p.relacion,
@@ -539,6 +616,8 @@ export class Registro {
         generoOtro: this.generoOtroBeneficiario() ? b.generoOtro : undefined,
         curp: b.curp.toUpperCase(),
       },
+      datosFormato: this.datosFormato(),
+      otrosDocumentos: this.otrosCapturados().map((o) => ({ descripcion: o.descripcion.trim() })),
       carpetas: this.carpetas().map((carpeta) => ({
         carpeta: carpeta.carpeta,
         razonSolicitudId: carpeta.razonSolicitudId,
@@ -570,9 +649,18 @@ export class Registro {
     const adjuntar = (campo: string, archivo: File | null) => archivo && form.append(campo, archivo);
     adjuntar('identificacion', this.identificacion());
     adjuntar('acta_nacimiento', fisica && p.relacion ? this.acta() : null);
+    adjuntar('designacion_representante', fisica && !p.relacion ? this.designacion() : null);
+    adjuntar('autorizacion_organismo', fisica ? null : this.autorizacionOrganismo());
+    adjuntar('acreditacion_titular', fisica ? null : this.acreditacionTitular());
     adjuntar('curp', this.curpArchivo());
     adjuntar('sentencia', this.situacion() === 'Sentenciado' ? this.sentencia() : null);
     adjuntar('verdad_hechos', this.verdadHechos());
+    adjuntar('averiguacion_previa', this.averiguacionPrevia());
+    adjuntar('constancias_proceso', this.constanciasProceso());
+    adjuntar('no_reincidencia', this.noReincidencia());
+    adjuntar('situacion_socioeconomica', this.situacionSocioeconomica());
+    adjuntar('calidad_indigena', this.calidadIndigena());
+    this.otrosCapturados().forEach((o) => form.append('otros_documentos', o.archivo!));
 
     this.enviando.set(true);
     this.progreso.set(0);
@@ -582,7 +670,7 @@ export class Registro {
           this.progreso.set(Math.round((evento.loaded / evento.total) * 100));
         } else if (evento.type === HttpEventType.Response && evento.body) {
           this.enviando.set(false);
-          this.mostrarExito(evento.body.folio, evento.body.uuid);
+          this.mostrarExito(evento.body.folio, evento.body.uuid, evento.body.formatoUuid);
         }
       },
       error: (e) => {
@@ -592,20 +680,112 @@ export class Registro {
     });
   }
 
-  private mostrarExito(folio: string, uuid: string): void {
+  /** Documentos "Otro" con archivo (solo si la casilla está marcada); las filas vacías se ignoran. */
+  private otrosCapturados(): OtroDocumento[] {
+    return this.usaOtros() ? this.otros().filter((o) => o.archivo) : [];
+  }
+
+  protected alternarOtros(marcado: boolean): void {
+    this.usaOtros.set(marcado);
+    if (marcado && !this.otros().length) this.agregarOtro();
+  }
+
+  protected agregarOtro(): void {
+    this.otros.update((lista) => [...lista, { id: this.siguienteOtro++, archivo: null, descripcion: '' }]);
+  }
+
+  protected quitarOtro(id: number): void {
+    this.otros.update((lista) => lista.filter((o) => o.id !== id));
+    if (!this.otros().length) this.usaOtros.set(false);
+  }
+
+  protected cambiarOtro(id: number, cambios: Partial<OtroDocumento>): void {
+    this.otros.update((lista) => lista.map((o) => (o.id === id ? { ...o, ...cambios } : o)));
+  }
+
+  /** Respuestas complementarias del beneficiario: se omiten las vacías y las que dependen de un "No". */
+  private datosFormato(): Record<string, unknown> {
+    const v = this.complemento.getRawValue();
+    const texto = (t: string) => t.trim() || undefined;
+    const numero = (n: number | null) => (n === null || n === undefined || Number.isNaN(Number(n)) ? undefined : Number(n));
+    const bool = (b: boolean | null) => b ?? undefined;
+    return {
+      estadoSeEncuentra: texto(v.estadoSeEncuentra),
+      fechaComisionDelito: v.fechaComisionDelito || undefined,
+      comunidad: v.comunidad || undefined,
+      comunidadIndigenaCual: v.comunidad === 'INDIGENA' ? texto(v.comunidadIndigenaCual) : undefined,
+      interprete: bool(v.interprete),
+      discapacidad: bool(v.discapacidad),
+      discapacidadCual: v.discapacidad ? texto(v.discapacidadCual) : undefined,
+      enfermedadCronica: bool(v.enfermedadCronica),
+      enfermedadCronicaCual: v.enfermedadCronica ? texto(v.enfermedadCronicaCual) : undefined,
+      ocupacionPrevia: texto(v.ocupacionPrevia),
+      dependientesEconomicos: texto(v.dependientesEconomicos),
+      situacionLibertad: v.situacionLibertad || undefined,
+      medidaSeguridadCual: v.situacionLibertad === 'MEDIDA_SEGURIDAD' ? texto(v.medidaSeguridadCual) : undefined,
+      investigacionNumero: texto(v.investigacionNumero),
+      investigacionAgencia: texto(v.investigacionAgencia),
+      penaAnios: numero(v.penaAnios),
+      penaMeses: numero(v.penaMeses),
+      multa: bool(v.multa),
+      multaMonto: v.multa ? numero(v.multaMonto) : undefined,
+      apelacion: bool(v.apelacion),
+      apelacionToca: v.apelacion ? texto(v.apelacionToca) : undefined,
+      apelacionTribunal: v.apelacion ? texto(v.apelacionTribunal) : undefined,
+      apelacionResolucion: v.apelacion ? v.apelacionResolucion || undefined : undefined,
+      penaModificada: v.apelacion ? bool(v.penaModificada) : undefined,
+      penaCompurgarAnios: v.apelacion && v.penaModificada ? numero(v.penaCompurgarAnios) : undefined,
+      penaCompurgarMeses: v.apelacion && v.penaModificada ? numero(v.penaCompurgarMeses) : undefined,
+      amparo: bool(v.amparo),
+      amparoEfectos: v.amparo ? texto(v.amparoEfectos) : undefined,
+      amparoConcedido: v.amparo ? bool(v.amparoConcedido) : undefined,
+      sentenciadoAntesMismoDelito: bool(v.sentenciadoAntesMismoDelito),
+      otroProceso: bool(v.otroProceso),
+      otroProcesoExpediente: v.otroProceso ? texto(v.otroProcesoExpediente) : undefined,
+      otroProcesoJuzgado: v.otroProceso ? texto(v.otroProcesoJuzgado) : undefined,
+    };
+  }
+
+  /** Descarga un PDF del backend sin salir de la página (el servidor responde con Content-Disposition: attachment). */
+  private descargar(url: string): void {
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.rel = 'noopener';
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+  }
+
+  private mostrarExito(folio: string, uuid: string, formatoUuid: string | null): void {
+    // Al guardar se descargan solos el acuse y el formato de solicitud (con una pausa para que el
+    // navegador acepte las dos descargas); los botones del aviso permiten repetirlas.
+    this.descargar(this.publicoService.urlAcuse(uuid, true));
+    if (formatoUuid) setTimeout(() => this.descargar(this.publicoService.urlFormato(formatoUuid, true)), 800);
     void Swal.fire({
       title: '¡Solicitud registrada!',
       html: `Tu número de solicitud es <strong style="font-size:1.3em;color:#960048">${this.escapar(folio)}</strong>.<br><br>
-             Consérvalo. Te enviamos el acuse a tu correo; para ver el estatus usa <em>Consultar solicitud</em> con ese mismo correo.`,
+             Consérvalo. Te enviamos el acuse a tu correo; para ver el estatus usa <em>Consultar solicitud</em> con ese mismo correo.<br><br>
+             Se descargaron tu acuse{{formato}}. Si no se guardaron, usa los botones de abajo.`.replace('{{formato}}', formatoUuid ? ' y tu formato de solicitud' : ''),
       icon: 'success',
       showCancelButton: true,
-      confirmButtonText: 'Ver acuse',
+      showDenyButton: !!formatoUuid,
+      confirmButtonText: 'Descargar acuse',
+      denyButtonText: 'Descargar formato de solicitud',
       cancelButtonText: 'Terminar',
       confirmButtonColor: '#960048',
+      denyButtonColor: '#960048',
       allowOutsideClick: false,
+      // Los botones de descarga no cierran el aviso: así se pueden bajar ambos documentos.
+      preConfirm: () => {
+        this.descargar(this.publicoService.urlAcuse(uuid, true));
+        return false;
+      },
+      preDeny: () => {
+        if (formatoUuid) this.descargar(this.publicoService.urlFormato(formatoUuid, true));
+        return false;
+      },
     }).then((r) => {
-      if (r.isConfirmed) window.open(this.publicoService.urlAcuse(uuid), '_blank');
-      window.location.reload();
+      if (r.isDismissed) window.location.reload();
     });
   }
 

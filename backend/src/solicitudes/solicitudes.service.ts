@@ -29,7 +29,8 @@ import { MORPH } from '../database/models/opciones-tabla';
 import { ArchivosService } from '../comun/archivos.service';
 import { CatalogoNombresService } from '../comun/catalogo-nombres.service';
 import { CorreoService } from '../comun/correo.service';
-import { DocumentosGeneradosService } from '../comun/documentos-generados.service';
+import { DocumentosGeneradosService, nacionalidadDeCurp } from '../comun/documentos-generados.service';
+import { SolicitudDatosFormato } from '../database/models/solicitud-datos-formato.model';
 import {
   ESTATUS_SOLICITUD, ESTATUS_TURNO, INSTITUCION, RECOMENDACION_OPINION_CONSULTIVA,
 } from '../common/amnistia.constants';
@@ -218,6 +219,7 @@ export class SolicitudesService {
         Recomendacion,
         { model: SolicitudCarpeta, include: [RazonSolicitud, CarpetaDelito] },
         { model: SolicitudUser, include: [EstatusTurno] },
+        SolicitudDatosFormato,
       ],
     });
     if (!s) throw new NotFoundException('No existe la solicitud');
@@ -248,7 +250,9 @@ export class SolicitudesService {
         fechaNacimiento: s.beneficiario.fecha_nacimiento,
         genero: s.beneficiario.genero_otro || s.beneficiario.genero?.nombre || '',
         curp: s.beneficiario.curp,
+        nacionalidad: s.beneficiario.nacionalidad || nacionalidadDeCurp(s.beneficiario.curp),
       },
+      datosFormato: datosFormatoDetalle(s.datos_formato),
       solicitante: {
         personaFisica: !!sol.primer_apellido,
         nombre: sol.nombre,
@@ -451,7 +455,8 @@ export class SolicitudesService {
     const acuse = await this.sequelize.transaction((transaction) => this.generados.generarAcuseYFicha(s.id, transaction));
     if (s.solicitante.email) {
       const nombre = s.solicitante.primer_apellido ? nombreCompleto(s.solicitante) : (s.solicitante.nombre ?? '');
-      void this.correo.enviarSinFallar(s.solicitante.email, 'Recepción de solicitud', this.correo.acuseRecibido(nombre, acuse.uuid));
+      const formatoUuid = await this.generados.uuidFormato(s.id);
+      void this.correo.enviarSinFallar(s.solicitante.email, 'Recepción de solicitud', this.correo.acuseRecibido(nombre, acuse.uuid, formatoUuid));
     }
     return { ok: true };
   }
@@ -727,4 +732,15 @@ export class SolicitudesService {
     if (dias <= 40) return 'naranja';
     return 'rojo';
   }
+}
+
+const COLUMNAS_NO_MOSTRADAS = new Set(['id', 'solicitud_id', 'created_at', 'updated_at']);
+
+/** Datos complementarios del beneficiario y del titular del organismo, en camelCase y sin las columnas vacías. */
+function datosFormatoDetalle(datos: SolicitudDatosFormato | null | undefined): Record<string, unknown> | null {
+  if (!datos) return null;
+  const entradas = Object.entries(datos.get({ plain: true }) as Record<string, unknown>)
+    .filter(([columna, valor]) => !COLUMNAS_NO_MOSTRADAS.has(columna) && valor !== null && valor !== undefined && valor !== '')
+    .map(([columna, valor]) => [columna.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase()), valor] as const);
+  return entradas.length ? Object.fromEntries(entradas) : null;
 }

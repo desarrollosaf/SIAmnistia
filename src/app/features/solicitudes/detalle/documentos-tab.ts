@@ -84,7 +84,9 @@ import { ArchivoPdf } from '../../../shared/archivo-pdf/archivo-pdf';
       button { padding: .35rem .75rem; border: 1.5px solid var(--brand-border); border-radius: 999px; background: #fff;
         font-size: .76rem; font-weight: 700; color: var(--brand-muted); cursor: pointer; }
       button.activo, button:hover { border-color: var(--brand-primary); color: var(--brand-primary); } }
-    .documentos { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: .75rem; }
+    .documentos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem;
+      @media (max-width: 991.98px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      @media (max-width: 575.98px) { grid-template-columns: 1fr; } }
     .documento { display: flex; align-items: center; gap: .8rem; padding: .85rem; border: 1px solid var(--brand-border);
       border-radius: 14px; background: #fff; text-align: left; cursor: pointer; transition: border-color .15s, box-shadow .15s;
       > app-icono { color: var(--brand-muted); }

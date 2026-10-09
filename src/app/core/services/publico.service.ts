@@ -6,6 +6,8 @@ import { environment } from '../../../environments/environment';
 export interface RegistroRespuesta {
   uuid: string;
   folio: string;
+  /** Formato de solicitud; solo existe para peticionarios persona física. */
+  formatoUuid: string | null;
 }
 
 export interface SolicitudConsulta {
@@ -46,8 +48,12 @@ export class PublicoService {
     });
   }
 
-  urlAcuse(uuid: string): string {
-    return `${this.url}/acuse/${uuid}`;
+  urlAcuse(uuid: string, descargar = false): string {
+    return `${this.url}/acuse/${uuid}${descargar ? '?descargar=1' : ''}`;
+  }
+
+  urlFormato(uuid: string, descargar = false): string {
+    return `${this.url}/formato/${uuid}${descargar ? '?descargar=1' : ''}`;
   }
 
   validarAcuse(cadena: string): Observable<ValidacionAcuse> {

@@ -79,6 +79,17 @@ export const ADMINISTRACION_ROUTES: Routes = [
     }),
   },
   {
+    path: 'situaciones-juridicas',
+    ...catalogo({
+      titulo: 'Situaciones jurídicas',
+      descripcion: 'Opciones de situación jurídica del formulario (p. ej. Investigada, Procesado, Sentenciado). "Otro" pide especificar la situación y no se puede modificar.',
+      recurso: 'situaciones-juridicas',
+      singular: 'situación jurídica',
+      columnas: [{ campo: 'nombre', titulo: 'Situación jurídica' }, { campo: 'solicitudes', titulo: 'Solicitudes', numero: true }],
+      campos: [{ clave: 'nombre', etiqueta: 'Situación jurídica', tipo: 'texto' }],
+    }),
+  },
+  {
     path: 'contadores',
     ...catalogo({
       titulo: 'Folios (contadores)',

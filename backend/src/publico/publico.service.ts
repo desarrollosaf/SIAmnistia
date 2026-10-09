@@ -18,6 +18,7 @@ import { ModalidadDelito } from '../database/models/modalidad-delito.model';
 import { TipoSolicitante } from '../database/models/tipo-solicitante.model';
 import { SituacionJuridica } from '../database/models/situacion-juridica.model';
 import { Parentesco } from '../database/models/parentesco.model';
+import { SolicitudDatosFormato } from '../database/models/solicitud-datos-formato.model';
 import { Genero } from '../database/models/genero.model';
 import { Documento, DOC } from '../database/models/documento.model';
 import { SolicitudUser } from '../database/models/solicitud-user.model';
@@ -33,14 +34,23 @@ import { CatalogoNombresService } from '../comun/catalogo-nombres.service';
 import { ContadorService } from '../comun/contador.service';
 import { CorreoService } from '../comun/correo.service';
 import { DocumentosGeneradosService } from '../comun/documentos-generados.service';
-import { RegistroSolicitudDto } from './dto/registro-solicitud.dto';
+import { DatosFormatoDto, OtroDocumentoDto, RegistroSolicitudDto, SolicitanteDto } from './dto/registro-solicitud.dto';
 
 export interface ArchivosRegistro {
   identificacion?: Express.Multer.File[];
   curp?: Express.Multer.File[];
   acta_nacimiento?: Express.Multer.File[];
+  designacion_representante?: Express.Multer.File[];
+  autorizacion_organismo?: Express.Multer.File[];
+  acreditacion_titular?: Express.Multer.File[];
   sentencia?: Express.Multer.File[];
   verdad_hechos?: Express.Multer.File[];
+  averiguacion_previa?: Express.Multer.File[];
+  constancias_proceso?: Express.Multer.File[];
+  no_reincidencia?: Express.Multer.File[];
+  situacion_socioeconomica?: Express.Multer.File[];
+  calidad_indigena?: Express.Multer.File[];
+  otros_documentos?: Express.Multer.File[];
 }
 
 const MINUTOS_TOKEN = 60;
@@ -77,6 +87,7 @@ export class PublicoService {
     @InjectModel(TipoSolicitante) private readonly tipoSolicitanteModel: typeof TipoSolicitante,
     @InjectModel(SituacionJuridica) private readonly situacionModel: typeof SituacionJuridica,
     @InjectModel(Parentesco) private readonly parentescoModel: typeof Parentesco,
+    @InjectModel(SolicitudDatosFormato) private readonly datosFormatoModel: typeof SolicitudDatosFormato,
     @InjectModel(Genero) private readonly generoModel: typeof Genero,
     @InjectModel(Documento) private readonly documentoModel: typeof Documento,
     @InjectModel(TokenConsulta) private readonly tokenModel: typeof TokenConsulta,
@@ -185,16 +196,22 @@ export class PublicoService {
       solicitudId = solicitud.id;
 
       await this.guardarCarpetas(solicitud.id, dto, transaction);
-      await this.guardarArchivos(solicitud.id, archivos, transaction);
+      await this.guardarDatosFormato(solicitud.id, dto.datosFormato, fisica ? null : s, transaction);
+      await this.guardarArchivos(solicitud.id, archivos, dto.otrosDocumentos ?? [], s.acreditacionDescripcion, transaction);
       await this.generados.generarNarrativas(solicitud.id, transaction);
       const acuse = await this.generados.generarAcuseYFicha(solicitud.id, transaction);
 
       await transaction.commit();
 
+      const formatoUuid = await this.generados.uuidFormato(solicitud.id);
       const nombreSolicitante = fisica ? nombreCompleto(solicitante) : (solicitante.nombre ?? '');
-      void this.correo.enviarSinFallar(s.email, 'Recepción de solicitud', this.correo.acuseRecibido(nombreSolicitante, acuse.uuid));
+      void this.correo.enviarSinFallar(
+        s.email,
+        'Recepción de solicitud',
+        this.correo.acuseRecibido(nombreSolicitante, acuse.uuid, formatoUuid),
+      );
 
-      return { uuid: acuse.uuid, folio: `${folio}/${anio}` };
+      return { uuid: acuse.uuid, folio: `${folio}/${anio}`, formatoUuid };
     } catch (error) {
       await transaction.rollback();
       // Los archivos ya escritos de esta solicitud quedarían huérfanos: la carpeta es nueva, se borra completa.
@@ -209,6 +226,9 @@ export class PublicoService {
 
   /** Reglas que dependen de los catálogos o de los archivos (no caben en el DTO). */
   private async validarReglas(dto: RegistroSolicitudDto, archivos: ArchivosRegistro) {
+    if ((archivos.otros_documentos?.length ?? 0) !== (dto.otrosDocumentos?.length ?? 0)) {
+      throw new BadRequestException('Cada documento "Otro" debe llevar su descripción');
+    }
     const s = dto.solicitante;
     const fisica = await this.esPersonaFisica(s.tipoSolicitanteId);
 
@@ -226,8 +246,14 @@ export class PublicoService {
           throw new BadRequestException('Adjunta el acta de nacimiento que acredita el parentesco');
         }
       }
-    } else if (!s.nombreInstitucion || !s.rfc) {
-      throw new BadRequestException('Captura el nombre y RFC de la institución u organismo');
+    } else {
+      if (!s.nombreInstitucion || !s.rfc) throw new BadRequestException('Captura el nombre y RFC de la institución u organismo');
+      if (!s.titularNombre || !s.titularPrimerApellido) {
+        throw new BadRequestException('Captura el nombre y primer apellido del titular o representante legal del organismo');
+      }
+      if (archivos.acreditacion_titular?.length && !s.acreditacionDescripcion) {
+        throw new BadRequestException('Describe el documento que acredita al titular o representante legal');
+      }
     }
 
     await this.validarGeneroOtro(dto.beneficiario.generoId, dto.beneficiario.generoOtro);
@@ -323,17 +349,73 @@ export class PublicoService {
     }
   }
 
-  private async guardarArchivos(solicitudId: number, archivos: ArchivosRegistro, transaction: Transaction) {
+  /** Datos complementarios del beneficiario (formato de solicitud); se descartan las respuestas que dependen de un "No". */
+  private async guardarDatosFormato(
+    solicitudId: number,
+    d: DatosFormatoDto | undefined,
+    titular: SolicitanteDto | null,
+    transaction: Transaction,
+  ) {
+    if (!d && !titular) return;
+    d = d ?? {};
+    const limpio: Record<string, unknown> = { ...d };
+    if (titular) {
+      limpio.titularNombre = titular.titularNombre;
+      limpio.titularPrimerApellido = titular.titularPrimerApellido;
+      limpio.titularSegundoApellido = titular.titularSegundoApellido;
+    }
+    const borrar = (...claves: (keyof DatosFormatoDto)[]) => claves.forEach((c) => (limpio[c] = null));
+    if (d.comunidad !== 'INDIGENA') borrar('comunidadIndigenaCual');
+    if (!d.discapacidad) borrar('discapacidadCual');
+    if (!d.enfermedadCronica) borrar('enfermedadCronicaCual');
+    if (d.situacionLibertad !== 'MEDIDA_SEGURIDAD') borrar('medidaSeguridadCual');
+    if (!d.multa) borrar('multaMonto');
+    if (!d.apelacion) borrar('apelacionToca', 'apelacionTribunal', 'apelacionResolucion', 'penaModificada', 'penaCompurgarAnios', 'penaCompurgarMeses');
+    if (!d.penaModificada) borrar('penaCompurgarAnios', 'penaCompurgarMeses');
+    if (!d.amparo) borrar('amparoEfectos', 'amparoConcedido');
+    if (!d.otroProceso) borrar('otroProcesoExpediente', 'otroProcesoJuzgado');
+
+    const columnas = Object.fromEntries(
+      Object.entries(limpio).map(([k, v]) => [k.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`), v === '' ? null : (v ?? null)]),
+    );
+    await this.datosFormatoModel.create({ solicitud_id: solicitudId, ...columnas }, { transaction });
+  }
+
+  private async guardarArchivos(
+    solicitudId: number,
+    archivos: ArchivosRegistro,
+    otros: OtroDocumentoDto[],
+    acreditacion: string | undefined,
+    transaction: Transaction,
+  ) {
     const adjuntos: [Express.Multer.File | undefined, string, string][] = [
       [archivos.identificacion?.[0], 'Identificacion.pdf', 'Documento que acredita la identidad física o moral'],
       [archivos.verdad_hechos?.[0], DOC.verdadHechos, 'Documento que indica la versión de la parte que solicita el beneficio de la amnistía'],
       [archivos.curp?.[0], 'curp.pdf', 'Documento CURP del beneficiario'],
       [archivos.sentencia?.[0], DOC.sentencia, 'Documento de sentencia definitiva'],
       [archivos.acta_nacimiento?.[0], 'acta_peticionario.pdf', 'Documento que acredita la relación con el beneficiario'],
+      [archivos.designacion_representante?.[0], DOC.designacionRepresentante, 'Documental pública o escrito firmado por la persona interesada que designa al representante legal'],
+      [archivos.autorizacion_organismo?.[0], DOC.autorizacionOrganismo, 'Documental pública o escrito firmado por la persona interesada que autoriza al organismo a realizar el trámite'],
+      [archivos.acreditacion_titular?.[0], DOC.acreditacionTitular, acreditacion ?? 'Documental que acredita al titular o representante legal del organismo'],
+      [archivos.averiguacion_previa?.[0], DOC.averiguacionPrevia, 'Averiguación previa o carpeta de investigación'],
+      [archivos.constancias_proceso?.[0], DOC.constanciasProceso, 'Constancias del proceso penal ante el juez, sentencia de primera instancia, segunda instancia o amparo'],
+      [archivos.no_reincidencia?.[0], DOC.noReincidencia, 'Documento que acredita la no reincidencia respecto al delito por el que se solicita la amnistía'],
+      [archivos.situacion_socioeconomica?.[0], DOC.situacionSocioeconomica, 'Documento que acredita la situación socioeconómica'],
+      [archivos.calidad_indigena?.[0], DOC.calidadIndigena, 'Documento que acredita la calidad de indígena'],
     ];
     for (const [archivo, nombreDocumento, descripcion] of adjuntos) {
       if (!archivo) continue;
       await this.archivos.registrar({ solicitudId, contenido: archivo.buffer, nombreDocumento, descripcion, transaction });
+    }
+    // Documentos "Otro": uno por archivo, con la descripción que capturó el peticionario.
+    for (const [i, archivo] of (archivos.otros_documentos ?? []).entries()) {
+      await this.archivos.registrar({
+        solicitudId,
+        contenido: archivo.buffer,
+        nombreDocumento: DOC.otroDocumento,
+        descripcion: otros[i].descripcion,
+        transaction,
+      });
     }
   }
 
@@ -343,9 +425,20 @@ export class PublicoService {
 
   /** Solo se publica el acuse (no cualquier documento) por su uuid. */
   async acuse(uuid: string) {
-    const doc = await this.documentoModel.findOne({ where: { uuid, nombre_documento: DOC.acuse } });
-    if (!doc) throw new NotFoundException('No se encontró el acuse');
-    return { nombre: `acuse.pdf`, contenido: await this.archivos.leer(doc.ruta) };
+    return this.documentoPublico(uuid, DOC.acuse, 'acuse', 'No se encontró el acuse');
+  }
+
+  /** Formato de solicitud de amnistía (persona física); se entrega solo a quien tiene su uuid, como el acuse. */
+  async formato(uuid: string) {
+    return this.documentoPublico(uuid, DOC.formatoSolicitud, 'formato-solicitud', 'No se encontró el formato de solicitud');
+  }
+
+  private async documentoPublico(uuid: string, nombreDocumento: string, prefijo: string, noExiste: string) {
+    const doc = await this.documentoModel.findOne({ where: { uuid, nombre_documento: nombreDocumento } });
+    if (!doc) throw new NotFoundException(noExiste);
+    const solicitud = await this.solicitudModel.findByPk(doc.documentable_id, { attributes: ['folio', 'anio'] });
+    const folio = solicitud ? `-${solicitud.folio}-${solicitud.anio}` : '';
+    return { nombre: `${prefijo}${folio}.pdf`, contenido: await this.archivos.leer(doc.ruta) };
   }
 
   /** Lo que abre el QR del acuse: confirma que la cadena corresponde a una solicitud registrada. */
