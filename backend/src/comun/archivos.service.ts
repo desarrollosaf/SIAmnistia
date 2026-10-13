@@ -76,6 +76,12 @@ export class ArchivosService {
     }
   }
 
+  /** Reemplaza el contenido de un archivo ya registrado (mismo uuid y ruta) y devuelve su tamaño en KB. */
+  async sobrescribir(ruta: string, contenido: Buffer): Promise<string> {
+    await writeFile(this.rutaAbsoluta(ruta), contenido);
+    return (contenido.length / 1024).toFixed(2);
+  }
+
   async eliminar(ruta: string): Promise<void> {
     await unlink(this.rutaAbsoluta(ruta)).catch(() => undefined);
   }

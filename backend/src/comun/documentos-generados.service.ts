@@ -324,6 +324,34 @@ export class DocumentosGeneradosService {
     };
   }
 
+  /**
+   * Vuelve a armar el formato de solicitud con los datos actuales (p. ej. tras corregir la solicitud) y
+   * reemplaza su archivo conservando el mismo uuid y liga. No toca el acuse ni su QR. Si la solicitud no
+   * tenía formato (se registró antes de que existiera) lo crea.
+   */
+  async actualizarFormato(solicitudId: number, transaction?: Transaction): Promise<void> {
+    const s = await this.cargar(solicitudId, transaction);
+    const datos = await this.datosFormato(s, transaction);
+    const pdf = await this.pdf.formatoSolicitud(datos);
+    const existente = await this.documentoModel.findOne({
+      where: { documentable_id: solicitudId, documentable_type: MORPH.solicitud, nombre_documento: DOC.formatoSolicitud },
+      order: [['id', 'DESC']],
+      transaction,
+    });
+    if (existente) {
+      const tamano = await this.archivos.sobrescribir(existente.ruta, pdf);
+      await existente.update({ tamano }, { transaction });
+      return;
+    }
+    await this.archivos.registrar({
+      solicitudId,
+      contenido: pdf,
+      nombreDocumento: DOC.formatoSolicitud,
+      descripcion: `Formato de solicitud de amnistía (${datos.tipo === 'FISICA' ? 'persona física' : 'organismo'})`,
+      transaction,
+    });
+  }
+
   /** uuid del formato de solicitud vigente (el que se liga en el correo y en la descarga pública). */
   async uuidFormato(solicitudId: number): Promise<string | null> {
     const doc = await this.documentoModel.findOne({

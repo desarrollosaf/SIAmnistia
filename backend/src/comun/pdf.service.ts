@@ -195,25 +195,26 @@ export class PdfService {
     }).format(d.fecha).split('-').map(Number);
     const nacimiento = d.fechaNacimientoBeneficiario?.match(/^(\d{4})-(\d{2})-(\d{2})/);
 
-    const campo = (valor: string | null | undefined, ancho = '') =>
-      `<span class="campo" style="${ancho}">${escaparHtml(valor ?? '') || '&nbsp;'}</span>`;
+    const campo = (valor: string | null | undefined, ancho = '', clase = '') =>
+      `<span class="campo ${clase}" style="${ancho}">${escaparHtml(valor ?? '') || '&nbsp;'}</span>`;
+    // En el párrafo inicial los datos corren seguidos, en negritas y sin subrayado; si falta el dato queda el espacio para llenarlo a mano.
+    const dato = (valor: string | null | undefined, ancho = 'min-width:120px') =>
+      valor?.trim() ? `<strong>${escaparHtml(valor.trim())}</strong>` : campo('', ancho);
+    const fechaTexto = (m: RegExpMatchArray | null | undefined) =>
+      m ? `<strong>${Number(m[3])} de ${MESES[Number(m[2]) - 1]} de ${m[1]}</strong>` : `${campo('', 'min-width:34px')} / ${campo('', 'min-width:90px')} / ${campo('', 'min-width:46px')}`;
     const caja = (marcada: boolean) => `<span class="caja">[${marcada ? '&nbsp;X&nbsp;' : '&nbsp;&nbsp;&nbsp;'}]</span>`;
     const opcion = (marcada: boolean, texto: string) => `<div class="opcion">${caja(marcada)} ${texto}</div>`;
     const pregunta = (n: string, texto: string) => `<p class="pregunta"><span class="num">${n}</span><span>${texto}</span></p>`;
     const lineaVacia = '<div class="renglon">&nbsp;</div>';
 
-    const fechaNac = nacimiento
-      ? `${campo(nacimiento[3], 'min-width:34px')} / ${campo(MESES[Number(nacimiento[2]) - 1], 'min-width:90px')} / ${campo(nacimiento[1], 'min-width:46px')}`
-      : `${campo('', 'min-width:34px')} / ${campo('', 'min-width:90px')} / ${campo('', 'min-width:46px')}`;
+    const fechaNac = fechaTexto(nacimiento);
 
     const docs = d.documentacion;
     const c = d.complemento;
     const si = (v: boolean | null) => v === true;
     const no = (v: boolean | null) => v === false;
     const fechaDelito = c.fecha_comision_delito?.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    const fechaComision = fechaDelito
-      ? `${campo(fechaDelito[3], 'min-width:34px')} / ${campo(MESES[Number(fechaDelito[2]) - 1], 'min-width:90px')} / ${campo(fechaDelito[1], 'min-width:46px')}`
-      : `${campo('', 'min-width:34px')} / ${campo('', 'min-width:90px')} / ${campo('', 'min-width:46px')}`;
+    const fechaComision = fechaTexto(fechaDelito);
     const num = (v: number | null) => (v === null || v === undefined ? '' : String(v));
     const monto = c.multa_monto === null || c.multa_monto === undefined ? '' : `$ ${Number(c.multa_monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
     const libertad = c.situacion_libertad ?? (d.privadoLibertad ? 'PRIVADO' : null);
@@ -223,11 +224,11 @@ export class PdfService {
     const cuerpo = `
       ${org ? `      <h1>SOLICITUD DE AMNISTÍA</h1>
       <p class="sub">(Presentada por organismos públicos defensores de Derechos Humanos)</p>
-      <p class="derecha">Estado de México a ${campo(String(dia), 'min-width:36px')} de ${campo(MESES[mes - 1], 'min-width:110px')} de ${campo(String(anio), 'min-width:46px')}.</p>
+      <p class="derecha">Estado de México a <strong>${dia} de ${MESES[mes - 1]} de ${anio}</strong>.</p>
 
       <p class="destino"><strong>COMISIÓN LEGISLATIVA DE AMNISTÍA<br>DEL ESTADO DE MÉXICO<br>PRESENTE.</strong></p>
 
-      <p class="justificado interlineado">Yo, ${campo(d.titular, 'min-width:330px')}, titular o representante legal del organismo denominado ${campo(d.organismo, 'min-width:330px')}, solicito el beneficio al que hacen referencia los artículos 1, 7 y 11 de la Ley de Amnistía del Estado de México; así como el ACUERDO de la Comisión Legislativa de Seguimiento a los casos de Amnistía por el que se aprueban los Lineamientos de la Comisión de Seguimiento a los Casos de Amnistía para su organización y funcionamiento, así como para la recepción, análisis y seguimiento de los casos puestos a su consideración, en los numerales SEGUNDO, TERCERO y CUARTO, en favor de ${campo(d.beneficiario, 'min-width:300px')} con fecha de nacimiento ${fechaNac}, por el delito de ${campo(d.delitos, 'min-width:300px')}, cometido en fecha ${fechaComision}, para lo cual, proporciono la información que se describe.</p>
+      <p class="justificado interlineado">Yo, ${dato(d.titular, 'min-width:330px')}, titular o representante legal del organismo denominado ${dato(d.organismo, 'min-width:330px')}, solicito el beneficio al que hacen referencia los artículos 1, 7 y 11 de la Ley de Amnistía del Estado de México; así como el ACUERDO de la Comisión Legislativa de Seguimiento a los casos de Amnistía por el que se aprueban los Lineamientos de la Comisión de Seguimiento a los Casos de Amnistía para su organización y funcionamiento, así como para la recepción, análisis y seguimiento de los casos puestos a su consideración, en los numerales SEGUNDO, TERCERO y CUARTO, en favor de ${dato(d.beneficiario, 'min-width:300px')} con fecha de nacimiento ${fechaNac}, por el delito de ${dato(d.delitos, 'min-width:300px')}, cometido en fecha ${fechaComision}, para lo cual, proporciono la información que se describe.</p>
 
       <p class="justificado"><strong>${caja(d.autorizacionOrganismo)} ADJUNTO A LA PRESENTE SOLICITUD, DOCUMENTAL PÚBLICA O ESCRITO FIRMADO POR LA PERSONA INTERESADA, MEDIANTE EL CUAL AUTORIZA AL ORGANISMO, PARA REALIZAR EL TRÁMITE DE AMNISTÍA EN SU REPRESENTACIÓN.</strong></p>
       <p class="justificado"><strong>${caja(d.acreditacionTitular.adjunta)} ADJUNTO A LA PRESENTE SOLICITUD, COPIA SIMPLE O CERTIFICADA DE LA DOCUMENTAL QUE ME ACREDITA COMO TITULAR/REPRESENTANTE LEGAL DEL ORGANISMO</strong> ${campo(d.acreditacionTitular.descripcion, 'min-width:260px')}.</p>
@@ -245,11 +246,11 @@ export class PdfService {
 
 ` : `      <h1>SOLICITUD DE AMNISTÍA</h1>
       <p class="sub">(Presentada por familiares o representante legal)</p>
-      <p class="derecha">Estado de México a ${campo(String(dia), 'min-width:36px')} de ${campo(MESES[mes - 1], 'min-width:110px')} de ${campo(String(anio), 'min-width:46px')}.</p>
+      <p class="derecha">Estado de México a <strong>${dia} de ${MESES[mes - 1]} de ${anio}</strong>.</p>
 
       <p class="destino"><strong>COMISIÓN LEGISLATIVA DE AMNISTÍA<br>DEL ESTADO DE MÉXICO<br>PRESENTE.</strong></p>
 
-      <p class="justificado interlineado">Yo ${campo(d.solicitante, 'min-width:380px')}, solicito el beneficio que concede la Ley de Amnistía del Estado de México, en sus artículos 4, 7 y 11, así como el ACUERDO de la Comisión Legislativa de Seguimiento a los casos de Amnistía por el que se aprueban los Lineamientos de la Comisión de Seguimiento a los Casos de Amnistía para su organización y funcionamiento, así como para la recepción, análisis y seguimiento de los casos puestos a su consideración, en los numerales SEGUNDO, TERCERO y CUARTO, en favor de ${campo(d.beneficiario, 'min-width:300px')} con fecha de nacimiento ${fechaNac}, quien se encuentra en el estado de ${campo(c.estado_se_encuentra, 'min-width:130px')}, por el delito de ${campo(d.delitos, 'min-width:300px')}, cometido en fecha ${fechaComision}, para lo cual, proporciono la información que se describe.</p>
+      <p class="justificado interlineado">Yo ${dato(d.solicitante, 'min-width:380px')}, solicito el beneficio que concede la Ley de Amnistía del Estado de México, en sus artículos 4, 7 y 11, así como el ACUERDO de la Comisión Legislativa de Seguimiento a los casos de Amnistía por el que se aprueban los Lineamientos de la Comisión de Seguimiento a los Casos de Amnistía para su organización y funcionamiento, así como para la recepción, análisis y seguimiento de los casos puestos a su consideración, en los numerales SEGUNDO, TERCERO y CUARTO, en favor de ${dato(d.beneficiario, 'min-width:300px')} con fecha de nacimiento ${fechaNac}, quien se encuentra en el estado de ${dato(c.estado_se_encuentra, 'min-width:130px')}, por el delito de ${dato(d.delitos, 'min-width:300px')}, cometido en fecha ${fechaComision}, para lo cual, proporciono la información que se describe.</p>
 
       <p class="titulo-n"><strong>1. Respecto a la persona interesada en obtener el beneficio de amnistía, manifiesto que soy su:</strong></p>
       <div class="sangria">
@@ -390,26 +391,28 @@ export class PdfService {
       <p class="legal justificado">Por lo que usar, sustraer, divulgar, ocultar, alterar, mutilar, destruir o inutilizar, total o parcialmente, sin causa legítima, la información que se encuentre bajo su custodia como servidor público o a la cual tengan acceso o conocimiento con motivo de su empleo, cargo o comisión conforme a las facultades correspondientes puede estar sujeto a sanciones conforme a lo previsto en el artículo 186 del Código Penal del Estado de México y los artículos 4, 5 y 50 fracción IX de la Ley de Responsabilidades Administrativas del Estado de México; y demás relativos aplicables en la Legislación Estatal.</p>`;
 
     const estilos = `
-      body { font-size: 11.5px; line-height: 1.5; }
+      body { font-family: Arial, Helvetica, sans-serif; font-size: 11.5px; line-height: 1.5; }
       h1 { text-align: center; font-size: 17px; margin: 20px 0 0; color: #3a3a3c; }
       .sub { text-align: center; font-size: 12px; margin: 2px 0 14px; }
       h2 { text-align: center; font-size: 12.5px; margin: 18px 0 14px; } h2.izq { text-align: left; }
       .destino { margin: 18px 0 12px; font-size: 12.5px; }
       .interlineado { line-height: 2; margin: 0 0 14px; }
-      .campo { display: inline-block; border-bottom: 1px solid #333; padding: 0 3px; font-weight: bold; color: #960048; vertical-align: bottom; line-height: 1.3; }
-      .caja { font-family: monospace; font-weight: bold; }
+      .campo { display: inline-block; border-bottom: 1px solid #333; padding: 0 3px; font-weight: bold; color: #000; vertical-align: baseline; line-height: 1.15; }
+      .caja { font-family: Arial, Helvetica, sans-serif; font-weight: bold; white-space: pre; }
       .opcion { margin: 1px 0; } .sangria { margin-left: 26px; }
-      .pregunta { display: flex; gap: 10px; margin: 14px 0 3px; } .pregunta .num { min-width: 26px; font-weight: bold; }
+      .pregunta { display: flex; gap: 5px; margin: 14px 0 3px; } .pregunta .num { font-weight: bold; white-space: nowrap; }
       .sub-pregunta { margin: 10px 0 3px 26px; } .campo-t { margin: 9px 0 3px; }
       .titulo-n { margin: 16px 0 6px; }
-      .renglon { border-bottom: 1px solid #333; min-height: 20px; margin: 4px 0 6px 26px; font-weight: bold; color: #960048; }
+      .renglon { border-bottom: 1px solid #333; min-height: 20px; margin: 4px 0 6px 26px; font-weight: bold; color: #000; }
       .salto { page-break-after: always; }
       .nota { font-size: 10.5px; margin: 10px 0; }
       .protesta { margin: 18px 0 40px; }
       .firma-bloque { width: 56%; margin: 56px auto 28px; text-align: center; }
       .firma-linea { border-top: 1px solid #333; margin-bottom: 4px; } .firma-nombre { font-size: 10px; color: #555; margin-top: 2px; }
       .legal { font-size: 9px; line-height: 1.35; margin: 6px 0; }
-      .contenido { margin: 10px 0 14px 26px; text-align: justify; }
+      /* La narrativa capturada usa la misma letra que el resto de lo impreso: negritas y en negro, sin estilos propios del editor. */
+      .contenido { margin: 10px 0 14px 0; text-align: justify; font-weight: bold; color: #000; }
+      .contenido, .contenido * { font-family: Arial, Helvetica, sans-serif !important; font-size: 11.5px !important; font-weight: bold !important; color: #000 !important; background: none !important; }
     `;
     const html = this.documento(cuerpo, estilos, { conMembrete: false });
     return this.html(html, { numerar: true });
@@ -488,7 +491,7 @@ export class PdfService {
             printBackground: true,
             displayHeaderFooter: true,
             headerTemplate: '<span></span>',
-            footerTemplate: '<div style="width:100%;font-size:10px;font-family:Helvetica,Arial,sans-serif;text-align:right;padding-right:16mm"><span class="pageNumber"></span></div>',
+            footerTemplate: '<div style="width:100%;font-size:10px;font-family:Arial,Helvetica,sans-serif;text-align:right;padding-right:16mm"><span class="pageNumber"></span></div>',
             margin: { top: '14mm', bottom: '16mm', left: '16mm', right: '16mm' },
           }),
         );

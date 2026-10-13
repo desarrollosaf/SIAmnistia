@@ -23,6 +23,11 @@ export class ActualizarSolicitudDto {
   @IsOptional() @IsString() @MaxLength(20) solicitanteTelefono?: string;
   @IsOptional() @IsString() @MaxLength(20) solicitanteCelular?: string;
 
+  // Titular o representante legal del organismo (solo peticionario persona jurídica)
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas) titularNombre?: string;
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas) titularPrimerApellido?: string;
+  @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas) titularSegundoApellido?: string;
+
   // Domicilio del peticionario
   @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas) calle?: string;
   @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas) numExt?: string;

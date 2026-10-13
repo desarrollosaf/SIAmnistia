@@ -27,6 +27,13 @@ import { Modal } from '../../../shared/modal/modal';
           <div class="col-md-4"><label class="form-label">Primer apellido</label><input class="form-control mayusculas" formControlName="solicitantePrimerApellido" /></div>
           <div class="col-md-4"><label class="form-label">Segundo apellido</label><input class="form-control mayusculas" formControlName="solicitanteSegundoApellido" /></div>
         }
+        @if (!fisica) {
+          <h3 class="seccion">Titular o representante legal del organismo</h3>
+          <div class="col-md-4"><label class="form-label">Nombre(s)</label><input class="form-control mayusculas" formControlName="titularNombre" /></div>
+          <div class="col-md-4"><label class="form-label">Primer apellido</label><input class="form-control mayusculas" formControlName="titularPrimerApellido" /></div>
+          <div class="col-md-4"><label class="form-label">Segundo apellido</label><input class="form-control mayusculas" formControlName="titularSegundoApellido" /></div>
+          <h3 class="seccion">Contacto del organismo</h3>
+        }
         <div class="col-md-4"><label class="form-label">Correo electrónico</label><input type="email" class="form-control" formControlName="solicitanteEmail" /></div>
         <div class="col-md-4"><label class="form-label">Teléfono</label><input class="form-control" maxlength="10" formControlName="solicitanteTelefono" /></div>
         <div class="col-md-4"><label class="form-label">Celular</label><input class="form-control" maxlength="10" formControlName="solicitanteCelular" /></div>
@@ -87,6 +94,9 @@ export class EditarSolicitud implements OnInit {
     solicitanteNombre: ['', Validators.required],
     solicitantePrimerApellido: [''],
     solicitanteSegundoApellido: [''],
+    titularNombre: [''],
+    titularPrimerApellido: [''],
+    titularSegundoApellido: [''],
     solicitanteEmail: ['', Validators.email],
     solicitanteTelefono: [''],
     solicitanteCelular: [''],
@@ -120,6 +130,9 @@ export class EditarSolicitud implements OnInit {
       solicitanteNombre: s.solicitante.nombre,
       solicitantePrimerApellido: s.solicitante.primerApellido ?? '',
       solicitanteSegundoApellido: s.solicitante.segundoApellido ?? '',
+      titularNombre: s.datosFormato?.titularNombre ?? '',
+      titularPrimerApellido: s.datosFormato?.titularPrimerApellido ?? '',
+      titularSegundoApellido: s.datosFormato?.titularSegundoApellido ?? '',
       solicitanteEmail: s.solicitante.email ?? '',
       solicitanteTelefono: s.solicitante.telefono ?? '',
       solicitanteCelular: s.solicitante.celular ?? '',
@@ -158,6 +171,10 @@ export class EditarSolicitud implements OnInit {
     if (!this.fisica) {
       delete datos['solicitantePrimerApellido'];
       delete datos['solicitanteSegundoApellido'];
+    } else {
+      delete datos['titularNombre'];
+      delete datos['titularPrimerApellido'];
+      delete datos['titularSegundoApellido'];
     }
 
     this.guardando.set(true);

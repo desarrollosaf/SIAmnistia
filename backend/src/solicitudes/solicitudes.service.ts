@@ -1,6 +1,5 @@
 import {
-  BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException,
-} from '@nestjs/common';
+  BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { Op, Sequelize, WhereOptions } from 'sequelize';
 import * as XLSX from 'xlsx';
@@ -46,6 +45,8 @@ const veTodas = (user: UsuarioActual) => user.legislativo || esPrivilegiado(user
 
 @Injectable()
 export class SolicitudesService {
+  private readonly logger = new Logger('Solicitudes');
+
   constructor(
     @InjectConnection() private readonly sequelize: Sequelize,
     @InjectModel(Solicitud) private readonly solicitudModel: typeof Solicitud,
@@ -53,6 +54,7 @@ export class SolicitudesService {
     @InjectModel(Usuario) private readonly usuarioModel: typeof Usuario,
     @InjectModel(Persona) private readonly personaModel: typeof Persona,
     @InjectModel(Domicilio) private readonly domicilioModel: typeof Domicilio,
+    @InjectModel(SolicitudDatosFormato) private readonly datosFormatoModel: typeof SolicitudDatosFormato,
     @InjectModel(Documento) private readonly documentoModel: typeof Documento,
     @InjectModel(Recomendacion) private readonly recomendacionModel: typeof Recomendacion,
     @InjectModel(EstatusSolicitud) private readonly estatusSolicitudModel: typeof EstatusSolicitud,
@@ -363,7 +365,26 @@ export class SolicitudesService {
         juzgado: dto.juzgado,
         procedimiento_abreviado: dto.procedimientoAbreviado,
       }), { transaction });
+
+      // Titular o representante legal del organismo: va en solicitud_datos_formato (se crea si no existía).
+      const titular = quitarIndefinidos({
+        titular_nombre: dto.titularNombre,
+        titular_primer_apellido: dto.titularPrimerApellido,
+        titular_segundo_apellido: dto.titularSegundoApellido,
+      });
+      if (!s.solicitante.primer_apellido && Object.keys(titular).length) {
+        const fila = await this.datosFormatoModel.findOne({ where: { solicitud_id: s.id }, transaction });
+        if (fila) await fila.update(titular, { transaction });
+        else await this.datosFormatoModel.create({ solicitud_id: s.id, ...titular }, { transaction });
+      }
     });
+
+    // El formato de solicitud refleja la corrección (mismo documento y liga; el acuse no cambia).
+    try {
+      await this.generados.actualizarFormato(s.id);
+    } catch (error) {
+      this.logger.warn(`No se pudo actualizar el formato de la solicitud ${s.id}: ${(error as Error).message}`);
+    }
     return { ok: true };
   }
 
