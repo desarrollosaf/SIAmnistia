@@ -12,6 +12,7 @@ export const DOC = {
   observacionesHechos: 'observaciones hechos.pdf',
   informacionComplementaria: 'información complementaria.pdf',
   sentencia: 'sentencia.pdf',
+  justificacionNegacion: 'justificacion_negacion.pdf',
   designacionRepresentante: 'Designación de representante legal.pdf',
   autorizacionOrganismo: 'Autorización al organismo.pdf',
   acreditacionTitular: 'Acreditación del titular del organismo.pdf',

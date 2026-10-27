@@ -81,6 +81,11 @@ export class PublicoController {
     return this.publicoService.solicitudesPorToken(token);
   }
 
+  @Get('consulta/:token/solicitudes/:id/negacion')
+  async negacion(@Param('token') token: string, @Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+    this.enviarPdf(res, await this.publicoService.negacionPorToken(token, id), false);
+  }
+
   @Get('consulta/:token/solicitudes/:id')
   seguimiento(@Param('token') token: string, @Param('id', ParseIntPipe) id: number) {
     return this.publicoService.seguimientoPorToken(token, id);

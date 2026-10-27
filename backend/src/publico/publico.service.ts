@@ -529,6 +529,26 @@ export class PublicoService {
   }
 
   /** Línea de tiempo de la solicitud para el peticionario. */
+  private documentoNegacion(solicitudId: number) {
+    return this.documentoModel.findOne({
+      where: { documentable_id: solicitudId, documentable_type: MORPH.solicitud, nombre_documento: DOC.justificacionNegacion },
+      order: [['id', 'DESC']],
+    });
+  }
+
+  /** PDF con la razón de la negación; solo lo ve el peticionario dueño de la solicitud (por su liga de consulta). */
+  async negacionPorToken(token: string, id: number) {
+    const email = await this.emailDeToken(token);
+    const s = await this.solicitudModel.findOne({
+      where: { id },
+      include: [{ model: Persona, as: 'solicitante', required: true, where: { email } }, EstatusSolicitud],
+    });
+    if (!s || s.estatus_solicitud?.nombre !== 'NO PROCEDE') throw new NotFoundException('No se encontró el documento');
+    const doc = await this.documentoNegacion(s.id);
+    if (!doc) throw new NotFoundException('No se encontró el documento');
+    return { nombre: `negacion-${s.folio}-${s.anio}.pdf`, contenido: await this.archivos.leer(doc.ruta) };
+  }
+
   async seguimientoPorToken(token: string, id: number) {
     const email = await this.emailDeToken(token);
     const s = await this.solicitudModel.findOne({
@@ -544,9 +564,13 @@ export class PublicoService {
     });
     if (!s) throw new NotFoundException('No se encontró la solicitud');
 
+    // Solicitud negada: el peticionario puede ver el documento con la razón que adjuntó la Comisión.
+    const negacion = s.estatus_solicitud?.nombre === 'NO PROCEDE' ? await this.documentoNegacion(s.id) : null;
+
     return {
       nus: nus(s),
       estatus: s.estatus_solicitud?.nombre ?? '',
+      tieneDocumentoNegacion: !!negacion,
       fechaRegistro: s.created_at,
       fechaAprobacion: s.fecha_aprovacion,
       fechaFinalizo: s.fecha_finalizo,

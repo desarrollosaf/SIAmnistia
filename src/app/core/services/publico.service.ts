@@ -21,6 +21,8 @@ export interface SolicitudConsulta {
 export interface SeguimientoConsulta {
   nus: string;
   estatus: string;
+  /** Solicitud negada con un documento de justificación que el peticionario puede ver. */
+  tieneDocumentoNegacion: boolean;
   fechaRegistro: string;
   fechaAprobacion: string | null;
   fechaFinalizo: string | null;
@@ -65,6 +67,10 @@ export class PublicoService {
 
   solicitudes(token: string): Observable<SolicitudConsulta[]> {
     return this.http.get<SolicitudConsulta[]>(`${this.url}/consulta/${token}`);
+  }
+
+  urlNegacion(token: string, id: number): string {
+    return `${this.url}/consulta/${token}/solicitudes/${id}/negacion`;
   }
 
   seguimiento(token: string, id: number): Observable<SeguimientoConsulta> {

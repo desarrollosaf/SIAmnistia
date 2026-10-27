@@ -23,7 +23,7 @@ import { RazonSolicitud } from '../database/models/razon-solicitud.model';
 import { SolicitudUser } from '../database/models/solicitud-user.model';
 import { Usuario, nombreCompleto } from '../database/models/usuario.model';
 import { Institucion } from '../database/models/institucion.model';
-import { Documento } from '../database/models/documento.model';
+import { Documento, DOC } from '../database/models/documento.model';
 import { MORPH } from '../database/models/opciones-tabla';
 import { ArchivosService } from '../comun/archivos.service';
 import { CatalogoNombresService } from '../comun/catalogo-nombres.service';
@@ -416,7 +416,7 @@ export class SolicitudesService {
       await this.archivos.registrar({
         solicitudId: s.id,
         contenido: justificacion.buffer,
-        nombreDocumento: 'justificacion_negacion.pdf',
+        nombreDocumento: DOC.justificacionNegacion,
         descripcion: 'Razón de negación de solicitud',
         userId: user.sub,
         transaction,
