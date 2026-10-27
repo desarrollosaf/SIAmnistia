@@ -97,11 +97,6 @@
   span { font-size: 0.78rem; opacity: 0.85; }
 }
 
-/* Video entre la portada y "Beneficiarias y Beneficiarios" */
-/* Mismo espacio arriba (hasta la portada) que abajo (el relleno superior de la sección siguiente). */
-.seccion.seccion--video { padding: 5rem 0 0; }
-.video--claro { max-width: 450px; margin: 0 auto; border: 1px solid var(--l-borde); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.1); }
-
 /* Secciones */
 .seccion { padding: 5rem 0; scroll-margin-top: 60px; &--gris { background: var(--l-fondo-gris); } }
 .eyebrow { display: inline-block; margin-bottom: 0.5rem; padding: 0.3rem 0.8rem; border-radius: 999px;
@@ -194,5 +189,4 @@ h2 { margin: 0 0 1.4rem; font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 700
   .beneficiarios aside { position: static; }
   .ley__icono { display: none; }
   .seccion { padding: 3.5rem 0; }
-  .seccion.seccion--video { padding: 3.5rem 0 0; }
 }
