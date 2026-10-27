@@ -1,5 +1,30 @@
 /* Estilos globales: identidad del Poder Legislativo sobre Bootstrap 5. */
 
+/* Tipografía institucional (usada en el landing). */
+@font-face {
+  font-family: 'Regesto Grotesk';
+  src: url('/assets/fonts/RegestoGrotesk-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Regesto Grotesk';
+  src: url('/assets/fonts/RegestoGrotesk-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Regesto Grotesk';
+  src: url('/assets/fonts/RegestoGrotesk-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --brand-primary: rgb(150, 0, 72);
   --brand-primary-dark: #5a002b;
