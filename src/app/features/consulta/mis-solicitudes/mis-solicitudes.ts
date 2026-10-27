@@ -12,6 +12,8 @@ interface Hito {
   texto: string;
   fecha: string | null;
   tono: 'ok' | 'proceso' | 'error';
+  /** Botón opcional bajo el texto (p. ej. ver el documento de la negación). */
+  enlace?: { texto: string; url: string };
 }
 
 /** Solicitudes del peticionario (por la liga que recibió en su correo) y su línea de tiempo. */
@@ -51,7 +53,7 @@ export class MisSolicitudes implements OnInit {
     this.seleccionada.set(s);
     this.hitos.set(null);
     this.publicoService.seguimiento(this.token(), s.id).subscribe({
-      next: (seg) => this.hitos.set(this.armarHitos(seg)),
+      next: (seg) => this.hitos.set(this.armarHitos(seg, s.id)),
       error: (e) => {
         this.seleccionada.set(null);
         this.error.set(mensajeError(e, 'No se pudo consultar la solicitud.'));
@@ -60,7 +62,7 @@ export class MisSolicitudes implements OnInit {
   }
 
   /** Traduce los estatus internos a una línea de tiempo comprensible para el peticionario. */
-  private armarHitos(seg: SeguimientoConsulta): Hito[] {
+  private armarHitos(seg: SeguimientoConsulta, solicitudId: number): Hito[] {
     const hitos: Hito[] = [
       { titulo: 'Solicitud recibida', texto: 'Tu petición quedó registrada.', fecha: seg.fechaRegistro, tono: 'ok' },
     ];
@@ -70,7 +72,15 @@ export class MisSolicitudes implements OnInit {
       return hitos;
     }
     if (seg.estatus === 'NO PROCEDE') {
-      hitos.push({ titulo: 'Solicitud no admitida', texto: 'La solicitud no fue aceptada para su estudio.', fecha: seg.fechaAprobacion, tono: 'error' });
+      hitos.push({
+        titulo: 'Solicitud no admitida',
+        texto: 'La solicitud no fue aceptada para su estudio.',
+        fecha: seg.fechaAprobacion,
+        tono: 'error',
+        enlace: seg.tieneDocumentoNegacion
+          ? { texto: 'Ver documento de la negación', url: this.publicoService.urlNegacion(this.token(), solicitudId) }
+          : undefined,
+      });
       return hitos;
     }
 

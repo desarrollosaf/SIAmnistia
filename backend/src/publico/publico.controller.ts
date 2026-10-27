@@ -30,7 +30,7 @@ export class PublicoController {
         { name: 'autorizacion_organismo', maxCount: 1 },
         { name: 'acreditacion_titular', maxCount: 1 },
         { name: 'sentencia', maxCount: 1 },
-        { name: 'verdad_hechos', maxCount: 1 },
+        { name: 'verdad_hechos', maxCount: 20 },
         { name: 'averiguacion_previa', maxCount: 1 },
         { name: 'constancias_proceso', maxCount: 1 },
         { name: 'no_reincidencia', maxCount: 1 },
@@ -79,6 +79,11 @@ export class PublicoController {
   @Get('consulta/:token')
   solicitudes(@Param('token') token: string) {
     return this.publicoService.solicitudesPorToken(token);
+  }
+
+  @Get('consulta/:token/solicitudes/:id/negacion')
+  async negacion(@Param('token') token: string, @Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+    this.enviarPdf(res, await this.publicoService.negacionPorToken(token, id), false);
   }
 
   @Get('consulta/:token/solicitudes/:id')

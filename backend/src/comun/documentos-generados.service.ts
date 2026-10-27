@@ -86,7 +86,7 @@ export class DocumentosGeneradosService {
       titulo: 'Detalles sobre su solicitud',
       contenidoHtml: s.informacion_complementaria ?? '',
       firmante,
-    });
+    }, 'ficha');
     await this.archivos.registrar({
       solicitudId,
       contenido: complementaria,
@@ -100,7 +100,7 @@ export class DocumentosGeneradosService {
       titulo: 'Información complementaria de la narrativa de hechos',
       contenidoHtml: s.observaciones_hechos ?? '',
       firmante,
-    });
+    }, 'ficha');
     await this.archivos.registrar({
       solicitudId,
       contenido: observaciones,
@@ -108,6 +108,29 @@ export class DocumentosGeneradosService {
       descripcion: 'Documento generado a petición del peticionario para brindar más detalles sobre su narrativa de hechos',
       transaction,
     });
+  }
+
+  /**
+   * Vuelve a dibujar los dos documentos de narrativa ya guardados (mismo uuid y liga) con el encabezado actual:
+   * logo del Congreso arriba y sin pie. Útil para solicitudes registradas con el membrete anterior.
+   */
+  async actualizarNarrativas(solicitudId: number, transaction?: Transaction): Promise<void> {
+    const s = await this.cargar(solicitudId, transaction);
+    const firmante = s.solicitante.primer_apellido ? nombreCompleto(s.solicitante) : (s.solicitante.nombre ?? '');
+    const casos: [string, string, string | null][] = [
+      [DOC.informacionComplementaria, 'Detalles sobre su solicitud', s.informacion_complementaria],
+      [DOC.observacionesHechos, 'Información complementaria de la narrativa de hechos', s.observaciones_hechos],
+    ];
+    for (const [nombre, titulo, contenidoHtml] of casos) {
+      const doc = await this.documentoModel.findOne({
+        where: { documentable_id: solicitudId, documentable_type: MORPH.solicitud, nombre_documento: nombre },
+        order: [['id', 'DESC']],
+        transaction,
+      });
+      if (!doc) continue;
+      const pdf = await this.pdf.informacion({ nus: nus(s), titulo, contenidoHtml: contenidoHtml ?? '', firmante }, 'ficha');
+      await doc.update({ tamano: await this.archivos.sobrescribir(doc.ruta, pdf) }, { transaction });
+    }
   }
 
   /**

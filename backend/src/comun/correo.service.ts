@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport, type Transporter } from 'nodemailer';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+/** Logo del Congreso para el encabezado de los correos (se adjunta incrustado para que los clientes de correo lo muestren). */
+const LOGO = join(__dirname, '..', 'pdf', 'assets', 'logo-congreso.png');
+const CID_LOGO = 'logo-congreso';
 
 interface ConfigCorreo {
   host?: string;
@@ -41,7 +47,19 @@ export class CorreoService {
       this.logger.warn(`MAIL_HOST no configurado; no se envió "${asunto}" a ${para}`);
       return;
     }
-    await this.transporter.sendMail({ from: this.from, to: para, subject: asunto, html: plantilla(cuerpoHtml) });
+    await this.transporter.sendMail({
+      from: this.from,
+      to: para,
+      subject: asunto,
+      html: plantilla(cuerpoHtml, `cid:${CID_LOGO}`),
+      attachments: [{ filename: 'logo-congreso.png', path: LOGO, cid: CID_LOGO }],
+    });
+  }
+
+  /** HTML completo del correo con el logo en línea (para verlo en un navegador sin enviarlo). */
+  vistaPrevia(cuerpoHtml: string): string {
+    const logo = `data:image/png;base64,${readFileSync(LOGO).toString('base64')}`;
+    return plantilla(cuerpoHtml, logo);
   }
 
   /** Igual que enviar(), pero un fallo de correo no debe tumbar la operación que lo origina. */
@@ -53,7 +71,7 @@ export class CorreoService {
     }
   }
 
-  /** Confirmación de recepción: liga a la solicitud de amnistía generada (ya no se envía acuse) y al manual. */
+  /** Confirmación de recepción: liga a la solicitud de amnistía generada (ya no se envía acuse). */
   solicitudRecibida(nombre: string, uuidFormato: string): string {
     const liga = `${this.appUrl}/formato/${uuidFormato}`;
     return `
@@ -61,7 +79,6 @@ export class CorreoService {
       <p>Recibimos tu solicitud para el proceso de amnistía. Con el siguiente botón puedes ver la solicitud de amnistía que se generó con tus datos.</p>
       ${boton(liga, 'Ver solicitud de amnistía')}
       <p style="text-align:justify"><strong>Nota:</strong> si alguno de los documentos que adjuntaste no corresponde a tu solicitud, esta será negada.</p>
-      ${boton(`${this.appUrl}/assets/manual-amnistia.pdf`, 'Manual de usuario', true)}
       <p class="nota">Si no puedes ver el botón, copia y pega esta liga en tu navegador:<br>${liga}</p>`;
   }
 
@@ -97,9 +114,10 @@ function boton(url: string, texto: string, secundario = false): string {
   return `<p style="text-align:center;margin:22px 0"><a href="${url}" style="display:inline-block;padding:12px 26px;border-radius:10px;border:1.5px solid #960048;background:${fondo};color:${color};font-weight:700;text-decoration:none">${texto}</a></p>`;
 }
 
-function plantilla(cuerpo: string): string {
+function plantilla(cuerpo: string, logoSrc: string): string {
   return `<!doctype html><html><body style="margin:0;padding:24px;background:#f3f4f6;font-family:'Segoe UI',Arial,sans-serif;color:#4b4b4d;font-size:14px;line-height:1.55">
     <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e4e2e3">
+      <div style="background:#ffffff;padding:20px 24px 14px;text-align:center"><img src="${logoSrc}" alt="Congreso del Estado de México" width="200" style="display:inline-block;width:200px;max-width:70%;height:auto;border:0"></div>
       <div style="background:linear-gradient(135deg,#960048,#5a002b);color:#fff;padding:18px 24px;font-weight:700">Poder Legislativo del Estado de México · Sistema de Amnistía</div>
       <div style="padding:24px">${cuerpo}</div>
     </div>
