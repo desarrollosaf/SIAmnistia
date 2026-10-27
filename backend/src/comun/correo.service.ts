@@ -53,16 +53,16 @@ export class CorreoService {
     }
   }
 
-  acuseRecibido(nombre: string, uuidAcuse: string, uuidFormato: string | null = null): string {
-    const liga = `${this.appUrl}/acuse/${uuidAcuse}`;
-    const ligaFormato = uuidFormato ? `${this.appUrl}/formato/${uuidFormato}` : null;
+  /** Confirmación de recepción: liga a la solicitud de amnistía generada (ya no se envía acuse) y al manual. */
+  solicitudRecibida(nombre: string, uuidFormato: string): string {
+    const liga = `${this.appUrl}/formato/${uuidFormato}`;
     return `
       <p>Estimado(a) <strong>${escapar(nombre)}</strong>:</p>
-      <p>Recibimos tu solicitud para el proceso de amnistía. Con ${ligaFormato ? 'los siguientes botones puedes ver tu acuse de recibo y la solicitud de amnistía que se generó con tus datos' : 'el siguiente botón puedes ver tu acuse de recibo'}.</p>
-      ${boton(liga, 'Ver acuse')}
-      ${ligaFormato ? boton(ligaFormato, 'Ver solicitud de amnistía') : ''}
+      <p>Recibimos tu solicitud para el proceso de amnistía. Con el siguiente botón puedes ver la solicitud de amnistía que se generó con tus datos.</p>
+      ${boton(liga, 'Ver solicitud de amnistía')}
+      <p style="text-align:justify"><strong>Nota:</strong> si alguno de los documentos que adjuntaste no corresponde a tu solicitud, esta será negada.</p>
       ${boton(`${this.appUrl}/assets/manual-amnistia.pdf`, 'Manual de usuario', true)}
-      <p class="nota">Si no puedes ver el botón, copia y pega esta liga en tu navegador:<br>${liga}${ligaFormato ? `<br>${ligaFormato}` : ''}</p>`;
+      <p class="nota">Si no puedes ver el botón, copia y pega esta liga en tu navegador:<br>${liga}</p>`;
   }
 
   turnoInstitucion(institucionId: number, solicitante: string, nus: string): string {

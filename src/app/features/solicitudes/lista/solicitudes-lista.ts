@@ -66,7 +66,7 @@ export class SolicitudesLista {
     if (legislativo) {
       acciones.push(
         { icono: 'pausa', titulo: 'Suspensión de términos', onClick: (s) => this.suspension.set(s) },
-        { icono: 'copias', titulo: 'Regenerar acuse y ficha técnica', onClick: (s) => this.regenerar(s) },
+        { icono: 'copias', titulo: 'Regenerar formato de solicitud y ficha técnica', onClick: (s) => this.regenerar(s) },
       );
     }
 
@@ -126,7 +126,7 @@ export class SolicitudesLista {
   private regenerar(s: SolicitudListado): void {
     void Swal.fire({
       title: '¿Regenerar documentos?',
-      text: `Se generará un acuse y una ficha técnica nuevos para la solicitud ${s.nus} y se reenviará el acuse al peticionario.`,
+      text: `Se generarán un formato de solicitud y una ficha técnica nuevos para la solicitud ${s.nus} y se reenviará la liga del formato al peticionario.`,
       icon: 'question',
       showCancelButton: true,
       reverseButtons: true,

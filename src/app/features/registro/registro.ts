@@ -670,7 +670,7 @@ export class Registro {
           this.progreso.set(Math.round((evento.loaded / evento.total) * 100));
         } else if (evento.type === HttpEventType.Response && evento.body) {
           this.enviando.set(false);
-          this.mostrarExito(evento.body.folio, evento.body.uuid, evento.body.formatoUuid);
+          this.mostrarExito(evento.body.folio, evento.body.formatoUuid);
         }
       },
       error: (e) => {
@@ -756,31 +756,22 @@ export class Registro {
     enlace.remove();
   }
 
-  private mostrarExito(folio: string, uuid: string, formatoUuid: string | null): void {
-    // Al guardar se descargan solos el acuse y el formato de solicitud (con una pausa para que el
-    // navegador acepte las dos descargas); los botones del aviso permiten repetirlas.
-    this.descargar(this.publicoService.urlAcuse(uuid, true));
-    if (formatoUuid) setTimeout(() => this.descargar(this.publicoService.urlFormato(formatoUuid, true)), 800);
+  private mostrarExito(folio: string, formatoUuid: string | null): void {
+    // Al guardar se descarga solo el formato de solicitud; el botón del aviso permite repetir la descarga.
+    if (formatoUuid) this.descargar(this.publicoService.urlFormato(formatoUuid, true));
     void Swal.fire({
       title: '¡Solicitud registrada!',
       html: `Tu número de solicitud es <strong style="font-size:1.3em;color:#960048">${this.escapar(folio)}</strong>.<br><br>
-             Consérvalo. Te enviamos el acuse a tu correo; para ver el estatus usa <em>Consultar solicitud</em> con ese mismo correo.<br><br>
-             Se descargaron tu acuse{{formato}}. Si no se guardaron, usa los botones de abajo.`.replace('{{formato}}', formatoUuid ? ' y tu formato de solicitud' : ''),
+             Consérvalo. Para ver el estatus usa <em>Consultar solicitud</em> con el correo que registraste.<br><br>
+             Se descargó tu formato de solicitud de amnistía. Si no se guardó, usa el botón de abajo.`,
       icon: 'success',
       showCancelButton: true,
-      showDenyButton: !!formatoUuid,
-      confirmButtonText: 'Descargar acuse',
-      denyButtonText: 'Descargar formato de solicitud',
+      confirmButtonText: 'Descargar formato de solicitud',
       cancelButtonText: 'Terminar',
       confirmButtonColor: '#960048',
-      denyButtonColor: '#960048',
       allowOutsideClick: false,
-      // Los botones de descarga no cierran el aviso: así se pueden bajar ambos documentos.
+      // El botón de descarga no cierra el aviso: se puede bajar de nuevo las veces que haga falta.
       preConfirm: () => {
-        this.descargar(this.publicoService.urlAcuse(uuid, true));
-        return false;
-      },
-      preDeny: () => {
         if (formatoUuid) this.descargar(this.publicoService.urlFormato(formatoUuid, true));
         return false;
       },

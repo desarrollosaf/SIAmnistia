@@ -111,10 +111,11 @@ export class DocumentosGeneradosService {
   }
 
   /**
-   * Genera una cadena de validación nueva, el acuse con su QR y la ficha técnica. Si ya había
-   * acuse o ficha (regeneración) se eliminan los anteriores. Devuelve el documento del acuse.
+   * Genera el formato de solicitud de amnistía y la ficha técnica (el acuse de recibo ya no se genera). Si ya
+   * había formato o ficha (regeneración) se eliminan los anteriores. Devuelve el documento del formato.
    */
-  async generarAcuseYFicha(solicitudId: number, transaction?: Transaction): Promise<Documento> {
+  async generarFormatoYFicha(solicitudId: number, transaction?: Transaction): Promise<Documento> {
+    // La cadena de validación se conserva en la solicitud (la usa la liga de validación pública).
     const { cadena, codificada } = nuevaCadenaValidacion();
     await this.solicitudModel.update(
       { cadena_validacion: cadena, cadena_validacion_codificada: codificada },
@@ -126,7 +127,7 @@ export class DocumentosGeneradosService {
       where: {
         documentable_id: solicitudId,
         documentable_type: MORPH.solicitud,
-        nombre_documento: { [Op.in]: [DOC.acuse, DOC.fichaTecnica, DOC.formatoSolicitud] },
+        nombre_documento: { [Op.in]: [DOC.fichaTecnica, DOC.formatoSolicitud] },
       },
       transaction,
     });
@@ -135,35 +136,11 @@ export class DocumentosGeneradosService {
       await this.archivos.eliminar(doc.ruta);
     }
 
-    const carpetas = s.solicitud_carpetas ?? [];
-    const acusePdf = await this.pdf.acuse({
-      nus: nus(s),
-      fechaRecepcion: s.created_at,
-      beneficiario: [s.beneficiario.primer_apellido, s.beneficiario.segundo_apellido, s.beneficiario.nombre]
-        .filter(Boolean)
-        .join(' '),
-      personaFisica: !!s.solicitante.primer_apellido,
-      razones: carpetas.map((c) => c.razon_solicitud?.valor).filter(Boolean).join(', '),
-      delitos: carpetas.flatMap((c) => (c.delitos ?? []).map((d) => d.delito)).join('; '),
-      carpetas: carpetas.map((c) => c.carpeta).join(', '),
-      email: s.solicitante.email ?? '',
-      telefono: s.solicitante.telefono ?? '',
-      cadena,
-      urlValidacion: `${this.appUrl}/validar-acuse/${codificada}`,
-    });
-    const acuse = await this.archivos.registrar({
-      solicitudId,
-      contenido: acusePdf,
-      nombreDocumento: DOC.acuse,
-      descripcion: 'acuse de recibo de solicitud',
-      transaction,
-    });
-
     // Formato "Solicitud de amnistía" prellenado, que se genera junto con el acuse: el de familiares o
     // representante legal (persona física) o el de organismos públicos defensores de Derechos Humanos.
     const datosFormato = await this.datosFormato(s, transaction);
     const formatoPdf = await this.pdf.formatoSolicitud(datosFormato);
-    await this.archivos.registrar({
+    const formato = await this.archivos.registrar({
       solicitudId,
       contenido: formatoPdf,
       nombreDocumento: DOC.formatoSolicitud,
@@ -171,10 +148,27 @@ export class DocumentosGeneradosService {
       transaction,
     });
 
-    // Ficha técnica: acuse + formato + verdad de hechos + narrativa + información complementaria + sentencia.
+    await this.archivos.registrar({
+      solicitudId,
+      contenido: await this.pdfFicha(s, formatoPdf, transaction),
+      nombreDocumento: DOC.fichaTecnica,
+      descripcion: 'Ficha técnica de la solicitud',
+      fichaTecnica: true,
+      transaction,
+    });
+
+    return formato;
+  }
+
+  /**
+   * PDF de la ficha técnica: formato de solicitud + verdad de hechos + narrativa + información complementaria + sentencia.
+   * Las páginas que genera el sistema (narrativas) llevan el logo del Congreso arriba y no llevan pie;
+   * los documentos que subió el peticionario se anexan tal cual.
+   */
+  private async pdfFicha(s: Solicitud, formatoPdf: Buffer, transaction?: Transaction): Promise<Buffer> {
     const anexos = await this.documentoModel.findAll({
       where: {
-        documentable_id: solicitudId,
+        documentable_id: s.id,
         documentable_type: MORPH.solicitud,
         nombre_documento: {
           [Op.in]: [DOC.verdadHechos, DOC.observacionesHechos, DOC.informacionComplementaria, DOC.sentencia],
@@ -183,24 +177,58 @@ export class DocumentosGeneradosService {
       order: [['id', 'DESC']],
       transaction,
     });
-    const orden = [DOC.verdadHechos, DOC.observacionesHechos, DOC.informacionComplementaria, DOC.sentencia];
-    const partes: Buffer[] = [acusePdf, formatoPdf];
-    for (const nombre of orden) {
+    const firmante = s.solicitante.primer_apellido ? nombreCompleto(s.solicitante) : (s.solicitante.nombre ?? '');
+    const narrativa = (titulo: string, contenidoHtml: string | null) =>
+      this.pdf.informacion({ nus: nus(s), titulo, contenidoHtml: contenidoHtml ?? '', firmante }, 'ficha');
+
+    const partes: Buffer[] = [formatoPdf];
+    for (const nombre of [DOC.verdadHechos, DOC.observacionesHechos, DOC.informacionComplementaria, DOC.sentencia]) {
       const doc = anexos.find((a) => a.nombre_documento === nombre);
-      if (doc && (await this.archivos.existe(doc.ruta))) {
+      if (!doc || !(await this.archivos.existe(doc.ruta))) continue;
+      if (nombre === DOC.observacionesHechos) {
+        partes.push(await narrativa('Información complementaria de la narrativa de hechos', s.observaciones_hechos));
+      } else if (nombre === DOC.informacionComplementaria) {
+        partes.push(await narrativa('Detalles sobre su solicitud', s.informacion_complementaria));
+      } else {
         partes.push(await this.archivos.leer(doc.ruta));
       }
     }
+    return this.pdf.unir(partes);
+  }
+
+  /**
+   * Vuelve a armar la ficha técnica con los documentos actuales y reemplaza su archivo (mismo uuid). Si no
+   * existía ficha, la crea.
+   */
+  async reconstruirFicha(solicitudId: number, transaction?: Transaction): Promise<void> {
+    const s = await this.cargar(solicitudId, transaction);
+    const formato = await this.documentoModel.findOne({
+      where: { documentable_id: solicitudId, documentable_type: MORPH.solicitud, nombre_documento: DOC.formatoSolicitud },
+      order: [['id', 'DESC']],
+      transaction,
+    });
+    const formatoPdf = formato
+      ? await this.archivos.leer(formato.ruta)
+      : await this.pdf.formatoSolicitud(await this.datosFormato(s, transaction));
+    const contenido = await this.pdfFicha(s, formatoPdf, transaction);
+    const ficha = await this.documentoModel.findOne({
+      where: { documentable_id: solicitudId, documentable_type: MORPH.solicitud, nombre_documento: DOC.fichaTecnica },
+      order: [['id', 'DESC']],
+      transaction,
+    });
+    if (ficha) {
+      const tamano = await this.archivos.sobrescribir(ficha.ruta, contenido);
+      await ficha.update({ tamano }, { transaction });
+      return;
+    }
     await this.archivos.registrar({
       solicitudId,
-      contenido: await this.pdf.unir(partes),
+      contenido,
       nombreDocumento: DOC.fichaTecnica,
       descripcion: 'Ficha técnica de la solicitud',
       fichaTecnica: true,
       transaction,
     });
-
-    return acuse;
   }
 
   /** Reúne lo capturado en el registro para prellenar el formato; lo que no se captura queda en blanco. */

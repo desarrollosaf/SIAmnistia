@@ -7,8 +7,11 @@ import * as QRCode from 'qrcode';
 import { rutaChromium } from '../common/chromium-path.util';
 
 const ASSETS = join(__dirname, '..', 'pdf', 'assets');
-const imagenBase64 = (archivo: string) =>
-  `data:image/jpeg;base64,${readFileSync(join(ASSETS, archivo)).toString('base64')}`;
+const imagenBase64 = (archivo: string, mime = 'image/jpeg') =>
+  `data:${mime};base64,${readFileSync(join(ASSETS, archivo)).toString('base64')}`;
+
+/** 'oficial': membrete y pie del acuse. 'ficha': solo el logo del Congreso arriba y sin pie (páginas de la ficha técnica). */
+export type EstiloPagina = 'oficial' | 'ficha';
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
@@ -148,8 +151,9 @@ export class PdfService {
   private readonly logger = new Logger('Pdf');
   private readonly encabezado = imagenBase64('encabezado.jpg');
   private readonly pie = imagenBase64('pie.jpg');
+  private readonly logo = imagenBase64('logo-congreso.png', 'image/png');
 
-  async acuse(d: DatosAcuse): Promise<Buffer> {
+  async acuse(d: DatosAcuse, estilo: EstiloPagina = 'oficial'): Promise<Buffer> {
     const qr = await QRCode.toDataURL(d.urlValidacion, { width: 120, margin: 1 });
     const fila = (etiqueta: string, valor: string) =>
       `<tr><th>${etiqueta}</th><td>${escaparHtml(valor)}</td></tr>`;
@@ -181,7 +185,7 @@ export class PdfService {
       <p class="centrado"><strong>ATENTAMENTE</strong></p>
       <p class="centrado firma">INTEGRANTES DE LA COMISIÓN ESPECIAL EN MATERIA DE AMNISTÍA DEL PODER LEGISLATIVO DEL ESTADO DE MÉXICO</p>`;
 
-    return this.html(this.documento(cuerpo));
+    return this.html(this.documento(cuerpo, '', { estilo }));
   }
 
 
@@ -418,7 +422,7 @@ export class PdfService {
     return this.html(html, { numerar: true });
   }
 
-  async informacion(d: DatosInformacion): Promise<Buffer> {
+  async informacion(d: DatosInformacion, estilo: EstiloPagina = 'oficial'): Promise<Buffer> {
     const cuerpo = `
       <p class="derecha">${lugarYFecha()}</p>
       <p class="derecha"><strong>Solicitud número: ${escaparHtml(d.nus)}</strong></p>
@@ -426,7 +430,7 @@ export class PdfService {
       <div class="contenido">${d.contenidoHtml || '<p>Sin información capturada.</p>'}</div>
       <p class="centrado"><strong>ATENTAMENTE</strong></p>
       <p class="centrado firma">${escaparHtml(d.firmante)}</p>`;
-    return this.html(this.documento(cuerpo));
+    return this.html(this.documento(cuerpo, '', { estilo }));
   }
 
   /** Une los PDFs en el orden recibido; si alguno está dañado se omite y se registra. */
@@ -444,12 +448,14 @@ export class PdfService {
     return Buffer.from(await destino.save());
   }
 
-  private documento(cuerpo: string, estilosExtra = '', opciones: { conMembrete?: boolean } = {}): string {
+  private documento(cuerpo: string, estilosExtra = '', opciones: { conMembrete?: boolean; estilo?: EstiloPagina } = {}): string {
     const membrete = opciones.conMembrete !== false;
+    const ficha = opciones.estilo === 'ficha';
     return `<!doctype html><html lang="es"><head><meta charset="utf-8"><style>
       @page { size: Letter; margin: 14mm 16mm; }
       body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: #2b2b2d; line-height: 1.45; }
       .encabezado { text-align: center; margin-bottom: 10px; } .encabezado img { width: 330px; }
+      .encabezado--logo { margin-bottom: 14px; } .encabezado--logo img { width: 190px; }
       .pie { text-align: center; margin-top: 18px; } .pie img { width: 100%; }
       .derecha { text-align: right; margin: 2px 0; } .centrado { text-align: center; }
       .justificado { text-align: justify; } .titulo { font-weight: bold; color: #960048; font-size: 13px; }
@@ -462,9 +468,9 @@ export class PdfService {
       .contenido { margin: 12px 0 24px; text-align: justify; } .contenido img { max-width: 100%; }
       ${estilosExtra}
     </style></head><body>
-      ${membrete ? `<div class="encabezado"><img src="${this.encabezado}" alt=""></div>` : ''}
+      ${membrete ? (ficha ? `<div class="encabezado encabezado--logo"><img src="${this.logo}" alt="Congreso del Estado de México"></div>` : `<div class="encabezado"><img src="${this.encabezado}" alt=""></div>`) : ''}
       ${cuerpo}
-      ${membrete ? `<div class="pie"><img src="${this.pie}" alt=""></div>` : ''}
+      ${membrete && !ficha ? `<div class="pie"><img src="${this.pie}" alt=""></div>` : ''}
     </body></html>`;
   }
 
