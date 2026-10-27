@@ -382,6 +382,7 @@ export class SolicitudesService {
     // El formato de solicitud refleja la corrección (mismo documento y liga; el acuse no cambia).
     try {
       await this.generados.actualizarFormato(s.id);
+      await this.generados.reconstruirFicha(s.id);
     } catch (error) {
       this.logger.warn(`No se pudo actualizar el formato de la solicitud ${s.id}: ${(error as Error).message}`);
     }
@@ -473,11 +474,10 @@ export class SolicitudesService {
   async regenerarDocumentos(id: number) {
     const s = await this.solicitudModel.findByPk(id, { include: [{ model: Persona, as: 'solicitante' }] });
     if (!s) throw new NotFoundException('No existe la solicitud');
-    const acuse = await this.sequelize.transaction((transaction) => this.generados.generarAcuseYFicha(s.id, transaction));
+    const formato = await this.sequelize.transaction((transaction) => this.generados.generarFormatoYFicha(s.id, transaction));
     if (s.solicitante.email) {
       const nombre = s.solicitante.primer_apellido ? nombreCompleto(s.solicitante) : (s.solicitante.nombre ?? '');
-      const formatoUuid = await this.generados.uuidFormato(s.id);
-      void this.correo.enviarSinFallar(s.solicitante.email, 'Recepción de solicitud', this.correo.acuseRecibido(nombre, acuse.uuid, formatoUuid));
+      void this.correo.enviarSinFallar(s.solicitante.email, 'Recepción de solicitud', this.correo.solicitudRecibida(nombre, formato.uuid));
     }
     return { ok: true };
   }

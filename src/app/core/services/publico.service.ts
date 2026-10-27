@@ -4,9 +4,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface RegistroRespuesta {
-  uuid: string;
   folio: string;
-  /** Formato de solicitud; solo existe para peticionarios persona física. */
+  /** Formato de solicitud de amnistía generado con el registro (el acuse ya no se genera). */
   formatoUuid: string | null;
 }
 

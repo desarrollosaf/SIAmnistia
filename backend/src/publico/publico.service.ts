@@ -199,19 +199,14 @@ export class PublicoService {
       await this.guardarDatosFormato(solicitud.id, dto.datosFormato, fisica ? null : s, transaction);
       await this.guardarArchivos(solicitud.id, archivos, dto.otrosDocumentos ?? [], s.acreditacionDescripcion, transaction);
       await this.generados.generarNarrativas(solicitud.id, transaction);
-      const acuse = await this.generados.generarAcuseYFicha(solicitud.id, transaction);
+      const formato = await this.generados.generarFormatoYFicha(solicitud.id, transaction);
 
       await transaction.commit();
 
-      const formatoUuid = await this.generados.uuidFormato(solicitud.id);
       const nombreSolicitante = fisica ? nombreCompleto(solicitante) : (solicitante.nombre ?? '');
-      void this.correo.enviarSinFallar(
-        s.email,
-        'Recepción de solicitud',
-        this.correo.acuseRecibido(nombreSolicitante, acuse.uuid, formatoUuid),
-      );
+      void this.correo.enviarSinFallar(s.email, 'Recepción de solicitud', this.correo.solicitudRecibida(nombreSolicitante, formato.uuid));
 
-      return { uuid: acuse.uuid, folio: `${folio}/${anio}`, formatoUuid };
+      return { folio: `${folio}/${anio}`, formatoUuid: formato.uuid };
     } catch (error) {
       await transaction.rollback();
       // Los archivos ya escritos de esta solicitud quedarían huérfanos: la carpeta es nueva, se borra completa.
