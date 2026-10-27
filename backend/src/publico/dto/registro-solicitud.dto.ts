@@ -223,10 +223,10 @@ export class DatosFormatoDto {
   @IsOptional() @IsString() @MaxLength(191) @Transform(mayusculas)
   investigacionAgencia?: string;
 
-  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(100)
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0)
   penaAnios?: number;
 
-  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(100)
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(11, { message: 'Los meses van de 0 a 11' })
   penaMeses?: number;
 
   @IsOptional() @IsBoolean()
@@ -250,10 +250,10 @@ export class DatosFormatoDto {
   @IsOptional() @IsBoolean()
   penaModificada?: boolean;
 
-  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(100)
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0)
   penaCompurgarAnios?: number;
 
-  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(100)
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(11, { message: 'Los meses van de 0 a 11' })
   penaCompurgarMeses?: number;
 
   @IsOptional() @IsBoolean()

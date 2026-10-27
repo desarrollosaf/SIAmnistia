@@ -13,6 +13,7 @@ import { PublicoService } from '../../core/services/publico.service';
 import { ToastService } from '../../core/services/toast.service';
 import { mensajeError } from '../../core/interceptors/auth.interceptor';
 import { ArchivoPdf } from '../../shared/archivo-pdf/archivo-pdf';
+import { ArchivosPdf } from '../../shared/archivos-pdf/archivos-pdf';
 import { Icono } from '../../shared/icono/icono';
 import { Modal } from '../../shared/modal/modal';
 import { SiNo } from '../../shared/si-no/si-no';
@@ -53,7 +54,7 @@ const esOtro = (texto: string | undefined) => (texto ?? '').trim().toUpperCase()
 @Component({
   selector: 'app-registro',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, ArchivoPdf, Icono, Modal, SiNo],
+  imports: [ReactiveFormsModule, RouterLink, ArchivoPdf, ArchivosPdf, Icono, Modal, SiNo],
   templateUrl: './registro.html',
   styleUrl: './registro.scss',
 })
@@ -84,7 +85,7 @@ export class Registro {
   protected readonly acreditacionTitular = signal<File | null>(null);
   protected readonly curpArchivo = signal<File | null>(null);
   protected readonly sentencia = signal<File | null>(null);
-  protected readonly verdadHechos = signal<File | null>(null);
+  protected readonly verdadHechos = signal<File[]>([]);
   protected readonly averiguacionPrevia = signal<File | null>(null);
   protected readonly constanciasProceso = signal<File | null>(null);
   protected readonly noReincidencia = signal<File | null>(null);
@@ -102,7 +103,11 @@ export class Registro {
   protected readonly delitoAbierto = signal(0);
 
   protected readonly fechaMin = `${new Date().getFullYear() - 100}-01-01`;
-  protected readonly fechaMax = `${new Date().getFullYear() - 10}-12-31`;
+  /** Hoy en hora local (YYYY-MM-DD): tope de los calendarios de fecha de nacimiento y fecha en que fue cometido el delito. */
+  protected readonly fechaHoy = (() => {
+    const h = new Date();
+    return `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`;
+  })();
 
   protected readonly peticionario = this.fb.nonNullable.group({
     tipoSolicitanteId: [0, Validators.min(1)],
@@ -165,8 +170,8 @@ export class Registro {
     medidaSeguridadCual: [''],
     investigacionNumero: [''],
     investigacionAgencia: [''],
-    penaAnios: [null as number | null, [Validators.min(0), Validators.max(100)]],
-    penaMeses: [null as number | null, [Validators.min(0), Validators.max(100)]],
+    penaAnios: [null as number | null, Validators.min(0)],
+    penaMeses: [null as number | null, [Validators.min(0), Validators.max(11)]],
     multa: [null as boolean | null],
     multaMonto: [null as number | null, Validators.min(0)],
     apelacion: [null as boolean | null],
@@ -174,8 +179,8 @@ export class Registro {
     apelacionTribunal: [''],
     apelacionResolucion: [''],
     penaModificada: [null as boolean | null],
-    penaCompurgarAnios: [null as number | null, [Validators.min(0), Validators.max(100)]],
-    penaCompurgarMeses: [null as number | null, [Validators.min(0), Validators.max(100)]],
+    penaCompurgarAnios: [null as number | null, Validators.min(0)],
+    penaCompurgarMeses: [null as number | null, [Validators.min(0), Validators.max(11)]],
     amparo: [null as boolean | null],
     amparoEfectos: [''],
     amparoConcedido: [null as boolean | null],
@@ -377,7 +382,17 @@ export class Registro {
         }
         if (this.complemento.invalid) {
           this.complemento.markAllAsTouched();
-          return fallar('Revisa los datos adicionales del beneficiario (los números no pueden ser negativos).');
+          const etiquetas: Record<string, string> = {
+            penaAnios: 'años de la pena (no puede ser negativo)',
+            penaMeses: 'meses de la pena (de 0 a 11)',
+            multaMonto: 'monto de la multa (no puede ser negativo)',
+            penaCompurgarAnios: 'años por compurgar (no puede ser negativo)',
+            penaCompurgarMeses: 'meses por compurgar (de 0 a 11)',
+          };
+          const campos = Object.entries(this.complemento.controls)
+            .filter(([, control]) => control.invalid)
+            .map(([nombre]) => etiquetas[nombre] ?? nombre);
+          return fallar(`Revisa los datos adicionales del beneficiario: ${campos.join(', ')}.`);
         }
         return true;
       }
@@ -654,7 +669,7 @@ export class Registro {
     adjuntar('acreditacion_titular', fisica ? null : this.acreditacionTitular());
     adjuntar('curp', this.curpArchivo());
     adjuntar('sentencia', this.situacion() === 'Sentenciado' ? this.sentencia() : null);
-    adjuntar('verdad_hechos', this.verdadHechos());
+    this.verdadHechos().forEach((a) => form.append('verdad_hechos', a));
     adjuntar('averiguacion_previa', this.averiguacionPrevia());
     adjuntar('constancias_proceso', this.constanciasProceso());
     adjuntar('no_reincidencia', this.noReincidencia());

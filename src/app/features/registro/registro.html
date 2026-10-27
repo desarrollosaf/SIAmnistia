@@ -19,7 +19,7 @@
   </div>
   <div class="hero__video">
     <iframe
-      src="https://www.youtube-nocookie.com/embed/JCnPjaTt1uo?start=99"
+      src="https://www.youtube-nocookie.com/embed/YBPjhHOZSKI"
       title="Guía del proceso de amnistía"
       allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowfullscreen
@@ -263,7 +263,7 @@
           </div>
           <div class="col-md-4">
             <label class="form-label" for="b-fecha">Fecha de nacimiento <span class="req">*</span></label>
-            <input id="b-fecha" type="date" class="form-control" formControlName="fechaNacimiento" [min]="fechaMin" [max]="fechaMax" [class.is-invalid]="invalido(beneficiario.controls.fechaNacimiento)" />
+            <input id="b-fecha" type="date" class="form-control" formControlName="fechaNacimiento" [min]="fechaMin" [max]="fechaHoy" [class.is-invalid]="invalido(beneficiario.controls.fechaNacimiento)" />
           </div>
           <div class="col-md-4">
             <label class="form-label" for="b-genero">Género <span class="req">*</span></label>
@@ -309,7 +309,7 @@
           </div>
           <div class="col-md-6">
             <label class="form-label" for="c-fechaComisionDelito">Fecha en que fue cometido el delito</label>
-            <input id="c-fechaComisionDelito" type="date" class="form-control" formControlName="fechaComisionDelito" [max]="fechaMax" />
+            <input id="c-fechaComisionDelito" type="date" class="form-control" formControlName="fechaComisionDelito" [max]="fechaHoy" />
           </div>
           <div class="col-md-6">
             <label class="form-label" for="c-comunidad">En términos del art. 2 de la Constitución Política de los Estados Unidos Mexicanos, ¿perteneces a una comunidad?</label>
@@ -391,11 +391,11 @@
         <div class="row g-3">
           <div class="col-md-3">
             <label class="form-label" for="c-penaAnios">Pena en tu sentencia: años</label>
-            <input id="c-penaAnios" type="number" class="form-control" formControlName="penaAnios" min="0" max="100" />
+            <input id="c-penaAnios" type="number" class="form-control" formControlName="penaAnios" min="0" />
           </div>
           <div class="col-md-3">
             <label class="form-label" for="c-penaMeses">Meses</label>
-            <input id="c-penaMeses" type="number" class="form-control" formControlName="penaMeses" min="0" max="100" />
+            <input id="c-penaMeses" type="number" class="form-control" formControlName="penaMeses" min="0" max="11" />
           </div>
           <div class="col-md-6">
             <span class="form-label d-block">¿La pena incluye el pago de una multa?</span>
@@ -440,11 +440,11 @@
           @if (comp().penaModificada) {
           <div class="col-md-3">
             <label class="form-label" for="c-penaCompurgarAnios">¿Cuántos años compurgarás en prisión? Años</label>
-            <input id="c-penaCompurgarAnios" type="number" class="form-control" formControlName="penaCompurgarAnios" min="0" max="100" />
+            <input id="c-penaCompurgarAnios" type="number" class="form-control" formControlName="penaCompurgarAnios" min="0" />
           </div>
           <div class="col-md-3">
             <label class="form-label" for="c-penaCompurgarMeses">Meses</label>
-            <input id="c-penaCompurgarMeses" type="number" class="form-control" formControlName="penaCompurgarMeses" min="0" max="100" />
+            <input id="c-penaCompurgarMeses" type="number" class="form-control" formControlName="penaCompurgarMeses" min="0" max="11" />
           </div>
           }
           }
@@ -673,8 +673,8 @@
         <div class="row g-3">
           <div class="col-md-7">
             <span class="form-label d-block">Verdad de los hechos (PDF, opcional)</span>
-            <app-archivo-pdf [(archivo)]="verdadHechos" texto="Seleccionar PDF (máx. 125 MB)" />
-            <div class="form-text">PDF en escala de grises a 150 dpi con la verdad jurídica de los hechos y la justificación de la presunta violación.</div>
+            <app-archivos-pdf [(archivos)]="verdadHechos" texto="Seleccionar PDF (máx. 125 MB cada uno)" />
+            <div class="form-text">PDF en escala de grises a 150 dpi con la verdad jurídica de los hechos y la justificación de la presunta violación. Puedes agregar uno o varios PDF; si son dos o más, se envían comprimidos en un ZIP.</div>
           </div>
           <div class="col-12">
             <span class="form-label d-block">Narrativa de los hechos</span>

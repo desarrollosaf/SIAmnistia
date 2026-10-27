@@ -30,7 +30,7 @@ export class PublicoController {
         { name: 'autorizacion_organismo', maxCount: 1 },
         { name: 'acreditacion_titular', maxCount: 1 },
         { name: 'sentencia', maxCount: 1 },
-        { name: 'verdad_hechos', maxCount: 1 },
+        { name: 'verdad_hechos', maxCount: 20 },
         { name: 'averiguacion_previa', maxCount: 1 },
         { name: 'constancias_proceso', maxCount: 1 },
         { name: 'no_reincidencia', maxCount: 1 },

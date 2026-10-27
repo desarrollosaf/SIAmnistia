@@ -100,6 +100,7 @@ export function tipoMime(nombre: string): string {
   const ext = extname(nombre).toLowerCase();
   const tipos: Record<string, string> = {
     '.pdf': 'application/pdf',
+    '.zip': 'application/zip',
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',

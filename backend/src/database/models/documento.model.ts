@@ -8,6 +8,7 @@ export const DOC = {
   fichaTecnica: 'ficha_tecnica.pdf',
   formatoSolicitud: 'formato_solicitud.pdf',
   verdadHechos: 'Verdad de hechos.pdf',
+  verdadHechosZip: 'Verdad de hechos.zip',
   observacionesHechos: 'observaciones hechos.pdf',
   informacionComplementaria: 'información complementaria.pdf',
   sentencia: 'sentencia.pdf',

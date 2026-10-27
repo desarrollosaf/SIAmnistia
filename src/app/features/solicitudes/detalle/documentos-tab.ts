@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DocumentoSolicitud, SolicitudesService } from '../../../core/services/solicitudes.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { mensajeError } from '../../../core/interceptors/auth.interceptor';
-import { abrirArchivo } from '../../../shared/archivos';
+import { abrirArchivo, descargarBlob } from '../../../shared/archivos';
 import { Icono } from '../../../shared/icono/icono';
 import { Modal } from '../../../shared/modal/modal';
 import { ArchivoPdf } from '../../../shared/archivo-pdf/archivo-pdf';
@@ -32,7 +32,7 @@ const SECCIONES: { clave: string; titulo: string; icono: string; nombres: string
     clave: 'narrativa',
     titulo: 'Narrativa de los hechos',
     icono: 'nota',
-    nombres: ['Verdad de hechos.pdf', 'observaciones hechos.pdf', 'información complementaria.pdf'],
+    nombres: ['Verdad de hechos.pdf', 'Verdad de hechos.zip', 'observaciones hechos.pdf', 'información complementaria.pdf'],
   },
 ];
 const SECCION_TRAMITE = { clave: 'tramite', titulo: 'Trámite: Comisión e instituciones', icono: 'enviar' };
@@ -190,6 +190,14 @@ export class DocumentosTab implements OnInit {
   }
 
   abrir(d: DocumentoSolicitud): void {
+    // Un ZIP no se puede mostrar en el navegador: se descarga.
+    if (d.nombre.toLowerCase().endsWith('.zip')) {
+      this.solicitudesService.archivo(d.uuid).subscribe({
+        next: (blob) => descargarBlob(blob, d.nombre),
+        error: () => this.toast.error('No se pudo descargar el documento.'),
+      });
+      return;
+    }
     abrirArchivo(this.solicitudesService.archivo(d.uuid), () => this.toast.error('No se pudo abrir el documento.'));
   }
 

@@ -34,6 +34,7 @@ import { CatalogoNombresService } from '../comun/catalogo-nombres.service';
 import { ContadorService } from '../comun/contador.service';
 import { CorreoService } from '../comun/correo.service';
 import { DocumentosGeneradosService } from '../comun/documentos-generados.service';
+import { zipSync } from 'fflate';
 import { DatosFormatoDto, OtroDocumentoDto, RegistroSolicitudDto, SolicitanteDto } from './dto/registro-solicitud.dto';
 
 export interface ArchivosRegistro {
@@ -344,6 +345,41 @@ export class PublicoService {
     }
   }
 
+  /**
+   * Verdad de los hechos: un solo PDF se guarda tal cual; si el peticionario adjunta dos o más, se comprimen en
+   * un ZIP (un PDF por archivo, con nombres únicos) y se guarda ese ZIP.
+   */
+  private async guardarVerdadHechos(solicitudId: number, archivos: Express.Multer.File[], transaction: Transaction) {
+    if (!archivos.length) return;
+    const descripcion = 'Documento que indica la versión de la parte que solicita el beneficio de la amnistía';
+    if (archivos.length === 1) {
+      await this.archivos.registrar({
+        solicitudId, contenido: archivos[0].buffer, nombreDocumento: DOC.verdadHechos, descripcion, transaction,
+      });
+      return;
+    }
+    const usados = new Set<string>();
+    const entradas: Record<string, Uint8Array> = {};
+    archivos.forEach((a, i) => {
+      // multer entrega el nombre original en latin1; se recupera el UTF-8 y se quitan rutas y caracteres no válidos.
+      const original = Buffer.from(a.originalname, 'latin1').toString('utf8').split(/[\\/]/).pop() ?? `documento-${i + 1}.pdf`;
+      const limpio = original.replace(/[<>:"|?*\u0000-\u001f]/g, '_') || `documento-${i + 1}.pdf`;
+      let nombre = limpio;
+      for (let n = 2; usados.has(nombre.toLowerCase()); n++) nombre = limpio.replace(/(\.pdf)?$/i, ` (${n}).pdf`);
+      usados.add(nombre.toLowerCase());
+      entradas[nombre] = new Uint8Array(a.buffer);
+    });
+    // Los PDF ya van comprimidos: el ZIP solo los agrupa (nivel 0), así es rápido y no crece.
+    const zip = Buffer.from(zipSync(entradas, { level: 0 }));
+    await this.archivos.registrar({
+      solicitudId,
+      contenido: zip,
+      nombreDocumento: DOC.verdadHechosZip,
+      descripcion: `${descripcion} (${archivos.length} archivos PDF en un ZIP)`,
+      transaction,
+    });
+  }
+
   /** Datos complementarios del beneficiario (formato de solicitud); se descartan las respuestas que dependen de un "No". */
   private async guardarDatosFormato(
     solicitudId: number,
@@ -385,7 +421,6 @@ export class PublicoService {
   ) {
     const adjuntos: [Express.Multer.File | undefined, string, string][] = [
       [archivos.identificacion?.[0], 'Identificacion.pdf', 'Documento que acredita la identidad física o moral'],
-      [archivos.verdad_hechos?.[0], DOC.verdadHechos, 'Documento que indica la versión de la parte que solicita el beneficio de la amnistía'],
       [archivos.curp?.[0], 'curp.pdf', 'Documento CURP del beneficiario'],
       [archivos.sentencia?.[0], DOC.sentencia, 'Documento de sentencia definitiva'],
       [archivos.acta_nacimiento?.[0], 'acta_peticionario.pdf', 'Documento que acredita la relación con el beneficiario'],
@@ -402,6 +437,8 @@ export class PublicoService {
       if (!archivo) continue;
       await this.archivos.registrar({ solicitudId, contenido: archivo.buffer, nombreDocumento, descripcion, transaction });
     }
+    await this.guardarVerdadHechos(solicitudId, archivos.verdad_hechos ?? [], transaction);
+
     // Documentos "Otro": uno por archivo, con la descripción que capturó el peticionario.
     for (const [i, archivo] of (archivos.otros_documentos ?? []).entries()) {
       await this.archivos.registrar({
