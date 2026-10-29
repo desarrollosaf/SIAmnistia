@@ -142,4 +142,4 @@ export const PREGUNTAS: { pregunta: string; texto?: string; lista?: string[]; no
   },
 ];
 
-export const URL_LEY = 'http://www.legislativoedomex.gob.mx/documentos/leyes/pdf/258.pdf';
+export const URL_LEY = 'https://legislacion.congresoedomex.gob.mx/storage/documentos/legislacion/244-AMNISTIA.docx';
