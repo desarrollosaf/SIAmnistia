@@ -49,6 +49,11 @@ export class PublicoService {
     });
   }
 
+  /** Indica si el registro de solicitudes está abierto (REGISTRO_ABIERTO en el backend). */
+  estado(): Observable<{ registroAbierto: boolean }> {
+    return this.http.get<{ registroAbierto: boolean }>(`${this.url}/estado`);
+  }
+
   urlAcuse(uuid: string, descargar = false): string {
     return `${this.url}/acuse/${uuid}${descargar ? '?descargar=1' : ''}`;
   }
