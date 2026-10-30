@@ -34,7 +34,7 @@ import { CatalogoNombresService } from '../comun/catalogo-nombres.service';
 import { ContadorService } from '../comun/contador.service';
 import { CorreoService } from '../comun/correo.service';
 import { DocumentosGeneradosService } from '../comun/documentos-generados.service';
-import { zipSync } from 'fflate';
+import { unzipSync, zipSync } from 'fflate';
 import { DatosFormatoDto, OtroDocumentoDto, RegistroSolicitudDto, SolicitanteDto } from './dto/registro-solicitud.dto';
 
 export interface ArchivosRegistro {
@@ -352,22 +352,40 @@ export class PublicoService {
   private async guardarVerdadHechos(solicitudId: number, archivos: Express.Multer.File[], transaction: Transaction) {
     if (!archivos.length) return;
     const descripcion = 'Documento que indica la versión de la parte que solicita el beneficio de la amnistía';
+    const esZip = (a: Express.Multer.File) => a.originalname.toLowerCase().endsWith('.zip');
     if (archivos.length === 1) {
-      await this.archivos.registrar({
-        solicitudId, contenido: archivos[0].buffer, nombreDocumento: DOC.verdadHechos, descripcion, transaction,
-      });
+      const [unico] = archivos;
+      await this.archivos.registrar(
+        esZip(unico)
+          ? { solicitudId, contenido: unico.buffer, nombreDocumento: DOC.verdadHechosZip, descripcion: `${descripcion} (ZIP)`, transaction }
+          : { solicitudId, contenido: unico.buffer, nombreDocumento: DOC.verdadHechos, descripcion, transaction },
+      );
       return;
     }
     const usados = new Set<string>();
     const entradas: Record<string, Uint8Array> = {};
+    const agregar = (original: string, contenido: Uint8Array, i: number) => {
+      const limpio = original.replace(/[<>:"|?*\u0000-\u001f]/g, '_') || `documento-${i + 1}.pdf`;
+      let nombre = limpio;
+      for (let n = 2; usados.has(nombre.toLowerCase()); n++) nombre = limpio.replace(/(\.[^.]+)?$/, ` (${n})$1`);
+      usados.add(nombre.toLowerCase());
+      entradas[nombre] = contenido;
+    };
     archivos.forEach((a, i) => {
       // multer entrega el nombre original en latin1; se recupera el UTF-8 y se quitan rutas y caracteres no válidos.
       const original = Buffer.from(a.originalname, 'latin1').toString('utf8').split(/[\\/]/).pop() ?? `documento-${i + 1}.pdf`;
-      const limpio = original.replace(/[<>:"|?*\u0000-\u001f]/g, '_') || `documento-${i + 1}.pdf`;
-      let nombre = limpio;
-      for (let n = 2; usados.has(nombre.toLowerCase()); n++) nombre = limpio.replace(/(\.pdf)?$/i, ` (${n}).pdf`);
-      usados.add(nombre.toLowerCase());
-      entradas[nombre] = new Uint8Array(a.buffer);
+      if (!esZip(a)) return agregar(original, new Uint8Array(a.buffer), i);
+      // Un ZIP junto a otros archivos se abre y sus PDF se integran al ZIP único.
+      let contenido: Record<string, Uint8Array>;
+      try {
+        contenido = unzipSync(new Uint8Array(a.buffer));
+      } catch {
+        throw new BadRequestException(`"${original}" no es un ZIP válido`);
+      }
+      for (const [ruta, datos] of Object.entries(contenido)) {
+        const nombre = ruta.split('/').pop();
+        if (nombre && datos.length) agregar(nombre, datos, i);
+      }
     });
     // Los PDF ya van comprimidos: el ZIP solo los agrupa (nivel 0), así es rápido y no crece.
     const zip = Buffer.from(zipSync(entradas, { level: 0 }));
@@ -375,7 +393,7 @@ export class PublicoService {
       solicitudId,
       contenido: zip,
       nombreDocumento: DOC.verdadHechosZip,
-      descripcion: `${descripcion} (${archivos.length} archivos PDF en un ZIP)`,
+      descripcion: `${descripcion} (${archivos.length} archivos en un ZIP)`,
       transaction,
     });
   }
