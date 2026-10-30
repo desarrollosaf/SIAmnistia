@@ -44,6 +44,14 @@ export function validarPdf(archivo: File): string | null {
   return null;
 }
 
+/** Igual que validarPdf, pero también acepta ZIP. */
+export function validarPdfOZip(archivo: File): string | null {
+  if (!archivo.name.toLowerCase().endsWith('.zip')) {
+    return validarPdf(archivo)?.replace('no es un archivo PDF.', 'no es un archivo PDF ni ZIP.') ?? null;
+  }
+  return archivo.size > MAX_PDF_MB * 1024 * 1024 ? `"${archivo.name}" supera los ${MAX_PDF_MB} MB permitidos.` : null;
+}
+
 /** Clase CSS de la etiqueta de estatus (ver .estatus en styles.scss). */
 export function claseEstatus(estatus: string | null | undefined): string {
   const e = (estatus ?? '').toUpperCase();

@@ -12,7 +12,11 @@ export const SOLO_PDF = {
     file: Express.Multer.File,
     callback: (error: Error | null, acceptFile: boolean) => void,
   ) => {
-    const esPdf = file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf');
-    callback(esPdf ? null : new BadRequestException(`"${file.originalname}" no es un archivo PDF`), esPdf);
+    const nombre = file.originalname.toLowerCase();
+    const esPdf = file.mimetype === 'application/pdf' || nombre.endsWith('.pdf');
+    // La verdad de los hechos también admite ZIP (varios PDF ya comprimidos).
+    const esZip = file.fieldname === 'verdad_hechos' && nombre.endsWith('.zip');
+    const valido = esPdf || esZip;
+    callback(valido ? null : new BadRequestException(`"${file.originalname}" no es un archivo PDF`), valido);
   },
 };

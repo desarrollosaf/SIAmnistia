@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, model, signal } from '@angular/core';
 import { Icono } from '../icono/icono';
-import { validarPdf } from '../archivos';
+import { validarPdf, validarPdfOZip } from '../archivos';
 
 let siguienteId = 0;
 
@@ -22,10 +22,10 @@ let siguienteId = 0;
           <button type="button" class="fila__quitar" (click)="quitar($index)" [attr.aria-label]="'Quitar ' + a.name"><app-icono nombre="cruz" /></button>
         </div>
       }
-      <input type="file" class="nativo" [id]="id" accept=".pdf,application/pdf" multiple (change)="seleccionar($event)" />
+      <input type="file" class="nativo" [id]="id" [accept]="permitirZip() ? '.pdf,application/pdf,.zip,application/zip,application/x-zip-compressed' : '.pdf,application/pdf'" multiple (change)="seleccionar($event)" />
       <label [for]="id" class="agregar" [class.agregar--vacio]="!archivos().length">
         <app-icono nombre="subir" />
-        <span>{{ archivos().length ? 'Agregar otro PDF' : texto() }}</span>
+        <span>{{ archivos().length ? (permitirZip() ? 'Agregar otro archivo' : 'Agregar otro PDF') : texto() }}</span>
       </label>
     </div>
     @if (archivos().length > 1) {
@@ -67,6 +67,8 @@ let siguienteId = 0;
 export class ArchivosPdf {
   readonly archivos = model<File[]>([]);
   readonly texto = input('Seleccionar archivos PDF');
+  /** Acepta también archivos ZIP (ya comprimidos). */
+  readonly permitirZip = input(false);
 
   protected readonly id = `archivos-pdf-${siguienteId++}`;
   protected readonly error = signal<string | null>(null);
@@ -79,7 +81,7 @@ export class ArchivosPdf {
 
     const errores: string[] = [];
     const validos = elegidos.filter((a) => {
-      const error = validarPdf(a);
+      const error = this.permitirZip() ? validarPdfOZip(a) : validarPdf(a);
       if (error) errores.push(error);
       return !error;
     });
