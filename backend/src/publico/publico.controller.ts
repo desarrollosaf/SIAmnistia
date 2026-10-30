@@ -2,6 +2,8 @@ import {
   Body, Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Res, UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
+import { ServiceUnavailableException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { IsEmail } from 'class-validator';
@@ -17,7 +19,20 @@ class SolicitarTokenDto {
 /** Endpoints sin sesión: registro de solicitudes, acuse y consulta del peticionario. */
 @Controller('publico')
 export class PublicoController {
-  constructor(private readonly publicoService: PublicoService) {}
+  constructor(
+    private readonly publicoService: PublicoService,
+    private readonly config: ConfigService,
+  ) {}
+
+  /** El registro está abierto salvo que REGISTRO_ABIERTO=false en .env (cortina de "próximamente"). */
+  private registroAbierto(): boolean {
+    return String(this.config.get('REGISTRO_ABIERTO') ?? 'true').toLowerCase() !== 'false';
+  }
+
+  @Get('estado')
+  estado() {
+    return { registroAbierto: this.registroAbierto() };
+  }
 
   @Post('solicitudes')
   @UseInterceptors(
@@ -42,6 +57,9 @@ export class PublicoController {
     ),
   )
   async registrar(@Body('datos') datos: string, @UploadedFiles() archivos: ArchivosRegistro) {
+    if (!this.registroAbierto()) {
+      throw new ServiceUnavailableException('Por el momento no se están recibiendo solicitudes de amnistía');
+    }
     const dto = await this.publicoService.validarDatos(datos);
     return this.publicoService.registrar(dto, archivos ?? {});
   }

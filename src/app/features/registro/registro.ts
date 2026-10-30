@@ -15,6 +15,7 @@ import { mensajeError } from '../../core/interceptors/auth.interceptor';
 import { ArchivoPdf } from '../../shared/archivo-pdf/archivo-pdf';
 import { ArchivosPdf } from '../../shared/archivos-pdf/archivos-pdf';
 import { Icono } from '../../shared/icono/icono';
+import { Cortina } from '../../shared/cortina/cortina';
 import { Modal } from '../../shared/modal/modal';
 import { SiNo } from '../../shared/si-no/si-no';
 import { PASOS } from './pasos';
@@ -54,7 +55,7 @@ const esOtro = (texto: string | undefined) => (texto ?? '').trim().toUpperCase()
 @Component({
   selector: 'app-registro',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, ArchivoPdf, ArchivosPdf, Icono, Modal, SiNo],
+  imports: [ReactiveFormsModule, RouterLink, ArchivoPdf, ArchivosPdf, Cortina, Icono, Modal, SiNo],
   templateUrl: './registro.html',
   styleUrl: './registro.scss',
 })
