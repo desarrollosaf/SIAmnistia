@@ -1,12 +1,15 @@
 import {
-  Body, Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Res, UploadedFiles,
-  UseInterceptors,
+  Body, Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Res, ServiceUnavailableException,
+  UploadedFiles, UseGuards, UseInterceptors,
 } from '@nestjs/common';
-import { ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { IsEmail } from 'class-validator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROL } from '../common/amnistia.constants';
 import { SOLO_PDF } from '../common/pdf-upload.util';
 import { PublicoService } from './publico.service';
 import type { ArchivosRegistro } from './publico.service';
@@ -15,6 +18,28 @@ class SolicitarTokenDto {
   @IsEmail({}, { message: 'Captura un correo electrónico válido' })
   email!: string;
 }
+
+/** Archivos que acepta el formulario de registro (público e interno). */
+const ADJUNTOS_REGISTRO = () =>
+  FileFieldsInterceptor(
+    [
+      { name: 'identificacion', maxCount: 1 },
+      { name: 'curp', maxCount: 1 },
+      { name: 'acta_nacimiento', maxCount: 1 },
+      { name: 'designacion_representante', maxCount: 1 },
+      { name: 'autorizacion_organismo', maxCount: 1 },
+      { name: 'acreditacion_titular', maxCount: 1 },
+      { name: 'sentencia', maxCount: 1 },
+      { name: 'verdad_hechos', maxCount: 20 },
+      { name: 'averiguacion_previa', maxCount: 1 },
+      { name: 'constancias_proceso', maxCount: 1 },
+      { name: 'no_reincidencia', maxCount: 1 },
+      { name: 'situacion_socioeconomica', maxCount: 1 },
+      { name: 'calidad_indigena', maxCount: 1 },
+      { name: 'otros_documentos', maxCount: 10 },
+    ],
+    SOLO_PDF,
+  );
 
 /** Endpoints sin sesión: registro de solicitudes, acuse y consulta del peticionario. */
 @Controller('publico')
@@ -35,31 +60,21 @@ export class PublicoController {
   }
 
   @Post('solicitudes')
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'identificacion', maxCount: 1 },
-        { name: 'curp', maxCount: 1 },
-        { name: 'acta_nacimiento', maxCount: 1 },
-        { name: 'designacion_representante', maxCount: 1 },
-        { name: 'autorizacion_organismo', maxCount: 1 },
-        { name: 'acreditacion_titular', maxCount: 1 },
-        { name: 'sentencia', maxCount: 1 },
-        { name: 'verdad_hechos', maxCount: 20 },
-        { name: 'averiguacion_previa', maxCount: 1 },
-        { name: 'constancias_proceso', maxCount: 1 },
-        { name: 'no_reincidencia', maxCount: 1 },
-        { name: 'situacion_socioeconomica', maxCount: 1 },
-        { name: 'calidad_indigena', maxCount: 1 },
-        { name: 'otros_documentos', maxCount: 10 },
-      ],
-      SOLO_PDF,
-    ),
-  )
+  @UseInterceptors(ADJUNTOS_REGISTRO())
   async registrar(@Body('datos') datos: string, @UploadedFiles() archivos: ArchivosRegistro) {
     if (!this.registroAbierto()) {
       throw new ServiceUnavailableException('Por el momento no se están recibiendo solicitudes de amnistía');
     }
+    const dto = await this.publicoService.validarDatos(datos);
+    return this.publicoService.registrar(dto, archivos ?? {});
+  }
+
+  /** Registro capturado dentro del sistema por el rol Registro; sigue disponible aunque la cortina esté puesta. */
+  @Post('solicitudes/interno')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(ROL.registro)
+  @UseInterceptors(ADJUNTOS_REGISTRO())
+  async registrarInterno(@Body('datos') datos: string, @UploadedFiles() archivos: ArchivosRegistro) {
     const dto = await this.publicoService.validarDatos(datos);
     return this.publicoService.registrar(dto, archivos ?? {});
   }

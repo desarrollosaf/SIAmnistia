@@ -1,4 +1,4 @@
-import { Component, OnInit, input, output, signal } from '@angular/core';
+import { Component, OnInit, effect, input, output, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
@@ -117,6 +117,7 @@ export class TurnosTab implements OnInit {
   protected readonly turnos = signal<Turno[]>([]);
   protected readonly cargando = signal(true);
   protected readonly guardando = signal(false);
+  private institucionesPedidas = false;
   protected readonly instituciones = signal<Opcion[]>([]);
   protected readonly institucionId = signal(0);
   protected readonly usuarios = signal<UsuarioInstitucion[]>([]);
@@ -129,13 +130,19 @@ export class TurnosTab implements OnInit {
     private readonly solicitudesService: SolicitudesService,
     private readonly catalogosService: CatalogosService,
     private readonly toast: ToastService,
-  ) {}
+  ) {
+    // Al aceptar la solicitud la pestaña se abre antes de que llegue el detalle actualizado: las instituciones
+    // se cargan cuando puedeTurnar pasa a verdadero, no solo al iniciar.
+    effect(() => {
+      if (this.puedeTurnar() && !this.institucionesPedidas) {
+        this.institucionesPedidas = true;
+        this.catalogosService.instituciones().subscribe((rows) => this.instituciones.set(rows));
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.cargar();
-    if (this.puedeTurnar()) {
-      this.catalogosService.instituciones().subscribe((rows) => this.instituciones.set(rows));
-    }
   }
 
   elegirInstitucion(id: number): void {

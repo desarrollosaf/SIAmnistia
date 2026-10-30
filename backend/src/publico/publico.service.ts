@@ -205,7 +205,7 @@ export class PublicoService {
       await transaction.commit();
 
       const nombreSolicitante = fisica ? nombreCompleto(solicitante) : (solicitante.nombre ?? '');
-      void this.correo.enviarSinFallar(s.email, 'Recepción de solicitud', this.correo.solicitudRecibida(nombreSolicitante, formato.uuid));
+      void this.correo.enviarSinFallar(s.email, 'Recepción de solicitud', this.correo.solicitudRecibida(nombreSolicitante, formato.uuid, `${folio}/${anio}`));
 
       return { folio: `${folio}/${anio}`, formatoUuid: formato.uuid };
     } catch (error) {

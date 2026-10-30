@@ -5,7 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpEventType } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import Quill from 'quill';
 import Swal from 'sweetalert2';
 import { CatalogosFormulario, CatalogosService, DelitoCatalogo, Opcion } from '../../core/services/catalogos.service';
@@ -62,6 +62,9 @@ const esOtro = (texto: string | undefined) => (texto ?? '').trim().toUpperCase()
 export class Registro {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
+  /** Captura interna (rol Registro dentro del sistema): sin cortina ni hero, y al terminar vuelve a Solicitudes. */
+  protected readonly interno = inject(ActivatedRoute).snapshot.data['interno'] === true;
 
   protected readonly pasos = PASOS;
   protected readonly paso = signal(0);
@@ -680,7 +683,7 @@ export class Registro {
 
     this.enviando.set(true);
     this.progreso.set(0);
-    this.publicoService.registrar(form).subscribe({
+    this.publicoService.registrar(form, this.interno).subscribe({
       next: (evento) => {
         if (evento.type === HttpEventType.UploadProgress && evento.total) {
           this.progreso.set(Math.round((evento.loaded / evento.total) * 100));
@@ -777,7 +780,10 @@ export class Registro {
     if (formatoUuid) this.descargar(this.publicoService.urlFormato(formatoUuid, true));
     void Swal.fire({
       title: '¡Solicitud registrada!',
-      html: `Tu número de solicitud es <strong style="font-size:1.3em;color:#960048">${this.escapar(folio)}</strong>.<br><br>
+      html: this.interno
+        ? `El número de solicitud es <strong style="font-size:1.3em;color:#960048">${this.escapar(folio)}</strong>.<br><br>
+             Se descargó el formato de solicitud de amnistía. Si no se guardó, usa el botón de abajo.`
+        : `Tu número de solicitud es <strong style="font-size:1.3em;color:#960048">${this.escapar(folio)}</strong>.<br><br>
              Consérvalo. Para ver el estatus usa <em>Consultar solicitud</em> con el correo que registraste.<br><br>
              Se descargó tu formato de solicitud de amnistía. Si no se guardó, usa el botón de abajo.`,
       icon: 'success',
@@ -792,7 +798,9 @@ export class Registro {
         return false;
       },
     }).then((r) => {
-      if (r.isDismissed) window.location.reload();
+      if (!r.isDismissed) return;
+      if (this.interno) void this.router.navigate(['/solicitudes']);
+      else window.location.reload();
     });
   }
 

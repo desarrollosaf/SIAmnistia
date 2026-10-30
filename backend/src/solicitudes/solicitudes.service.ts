@@ -477,7 +477,7 @@ export class SolicitudesService {
     const formato = await this.sequelize.transaction((transaction) => this.generados.generarFormatoYFicha(s.id, transaction));
     if (s.solicitante.email) {
       const nombre = s.solicitante.primer_apellido ? nombreCompleto(s.solicitante) : (s.solicitante.nombre ?? '');
-      void this.correo.enviarSinFallar(s.solicitante.email, 'Recepción de solicitud', this.correo.solicitudRecibida(nombre, formato.uuid));
+      void this.correo.enviarSinFallar(s.solicitante.email, 'Recepción de solicitud', this.correo.solicitudRecibida(nombre, formato.uuid, `${s.folio}/${s.anio}`));
     }
     return { ok: true };
   }
