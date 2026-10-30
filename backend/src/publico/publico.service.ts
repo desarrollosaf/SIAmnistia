@@ -29,7 +29,7 @@ import { EstatusTurno } from '../database/models/estatus-turno.model';
 import { Recomendacion } from '../database/models/recomendacion.model';
 import { TokenConsulta } from '../database/models/token-consulta.model';
 import { MORPH } from '../database/models/opciones-tabla';
-import { ArchivosService, UPLOADS_ROOT } from '../comun/archivos.service';
+import { ArchivosService, CARPETA_SOLICITUDES, UPLOADS_ROOT } from '../comun/archivos.service';
 import { CatalogoNombresService } from '../comun/catalogo-nombres.service';
 import { ContadorService } from '../comun/contador.service';
 import { CorreoService } from '../comun/correo.service';
@@ -212,7 +212,7 @@ export class PublicoService {
       await transaction.rollback();
       // Los archivos ya escritos de esta solicitud quedarían huérfanos: la carpeta es nueva, se borra completa.
       if (solicitudId) {
-        await rm(join(UPLOADS_ROOT, 'solicitud', String(solicitudId)), { recursive: true, force: true });
+        await rm(join(UPLOADS_ROOT, CARPETA_SOLICITUDES, String(solicitudId)), { recursive: true, force: true });
       }
       this.logger.error('No se pudo registrar la solicitud', (error as Error).stack);
       if (error instanceof BadRequestException || error instanceof ConflictException) throw error;
