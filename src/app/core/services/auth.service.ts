@@ -4,6 +4,7 @@ import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export const ROL_SUPER_USUARIO = 'Super usuario';
+export const ROL_REGISTRO = 'Registro';
 
 export interface AuthUser {
   id: number;
@@ -29,6 +30,7 @@ const USER_KEY = 'amn_user';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   readonly currentUser = signal<AuthUser | null>(this.readStoredUser());
+  readonly esRegistro = computed(() => this.currentUser()?.roles.includes(ROL_REGISTRO) ?? false);
   readonly esSuperUsuario = computed(() => this.currentUser()?.roles.includes(ROL_SUPER_USUARIO) ?? false);
   readonly esLegislativo = computed(() => this.currentUser()?.legislativo ?? false);
 

@@ -72,11 +72,13 @@ export class CorreoService {
   }
 
   /** Confirmación de recepción: liga a la solicitud de amnistía generada (ya no se envía acuse). */
-  solicitudRecibida(nombre: string, uuidFormato: string): string {
+  solicitudRecibida(nombre: string, uuidFormato: string, folio: string): string {
     const liga = `${this.appUrl}/formato/${uuidFormato}`;
     return `
       <p>Estimado(a) <strong>${escapar(nombre)}</strong>:</p>
-      <p>Recibimos tu solicitud para el proceso de amnistía. Con el siguiente botón puedes ver la solicitud de amnistía que se generó con tus datos.</p>
+      <p>Recibimos tu solicitud para el proceso de amnistía.</p>
+      <p>El número de solicitud es <strong>${escapar(folio)}</strong>.</p>
+      <p>Con el siguiente botón puedes ver la solicitud de amnistía que se generó con tus datos.</p>
       ${boton(liga, 'Ver solicitud de amnistía')}
       <p style="text-align:justify"><strong>Nota:</strong> si alguno de los documentos que adjuntaste no corresponde a tu solicitud, esta será negada.</p>
       <p class="nota">Si no puedes ver el botón, copia y pega esta liga en tu navegador:<br>${liga}</p>`;

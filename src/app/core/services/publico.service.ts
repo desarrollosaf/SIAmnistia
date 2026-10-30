@@ -42,8 +42,8 @@ export class PublicoService {
   constructor(private readonly http: HttpClient) {}
 
   /** Envía la solicitud con sus PDFs; reporta el progreso de subida (los archivos pueden pesar). */
-  registrar(form: FormData): Observable<HttpEvent<RegistroRespuesta>> {
-    return this.http.post<RegistroRespuesta>(`${this.url}/solicitudes`, form, {
+  registrar(form: FormData, interno = false): Observable<HttpEvent<RegistroRespuesta>> {
+    return this.http.post<RegistroRespuesta>(`${this.url}/solicitudes${interno ? '/interno' : ''}`, form, {
       reportProgress: true,
       observe: 'events',
     });

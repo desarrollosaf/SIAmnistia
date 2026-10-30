@@ -1,4 +1,9 @@
-<app-cortina />
+@if (!interno) {
+  <app-cortina />
+}
+@if (interno) {
+  <h1 class="h4 mb-3">Registrar solicitud</h1>
+} @else {
 <section class="hero">
   <div class="hero__texto">
     <span class="hero__eyebrow">Comisión Especial en Materia de Amnistía</span>
@@ -28,6 +33,7 @@
     ></iframe>
   </div>
 </section>
+}
 
 <section class="consentimiento panel">
   <p>Antes de comenzar, ten a la mano tus datos y los documentos en PDF: identificación oficial, CURP del beneficiario y, en su caso, acta de nacimiento y sentencia.</p>
