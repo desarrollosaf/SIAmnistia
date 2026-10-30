@@ -8,6 +8,8 @@ import { Documento } from '../database/models/documento.model';
 import { MORPH } from '../database/models/opciones-tabla';
 
 export const UPLOADS_ROOT = join(__dirname, '..', '..', 'uploads');
+/** Carpeta (relativa a uploads/) bajo la que se guarda cada solicitud: {CARPETA_SOLICITUDES}/{id}/. */
+export const CARPETA_SOLICITUDES = 'solicitud/amnistia26';
 
 export interface NuevoDocumento {
   solicitudId: number;
@@ -23,7 +25,7 @@ export interface NuevoDocumento {
 }
 
 /**
- * Guarda los archivos de cada solicitud en uploads/solicitud/{id}/ con un nombre aleatorio
+ * Guarda los archivos de cada solicitud en uploads/solicitud/amnistia26/{id}/ con un nombre aleatorio
  * (igual que Laravel en storage/app/solicitud/{id}/) y registra la fila en "documentos".
  */
 @Injectable()
@@ -37,9 +39,9 @@ export class ArchivosService {
     const extension = (datos.extension ?? (extname(datos.nombreDocumento) || '.pdf')).toLowerCase();
     const uuid = randomUUID();
     const nombre = `${uuid}${extension}`;
-    const ruta = `solicitud/${datos.solicitudId}/${nombre}`;
+    const ruta = `${CARPETA_SOLICITUDES}/${datos.solicitudId}/${nombre}`;
 
-    await mkdir(join(UPLOADS_ROOT, 'solicitud', String(datos.solicitudId)), { recursive: true });
+    await mkdir(join(UPLOADS_ROOT, CARPETA_SOLICITUDES, String(datos.solicitudId)), { recursive: true });
     await writeFile(this.rutaAbsoluta(ruta), datos.contenido);
 
     return this.documentoModel.create(
