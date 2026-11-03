@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
-import { ROL_SUPER_USUARIO } from './core/services/auth.service';
+import { ROL_REGISTRO, ROL_SUPER_USUARIO } from './core/services/auth.service';
 
 export const routes: Routes = [
   // Página de inicio pública (información de la Ley y acceso a la petición).
@@ -55,6 +55,13 @@ export const routes: Routes = [
         path: 'solicitudes',
         loadChildren: () =>
           import('./features/solicitudes/solicitudes.routes').then((m) => m.SOLICITUDES_ROUTES),
+      },
+      // Captura de una solicitud dentro del sistema (roles Registro y Super usuario).
+      {
+        path: 'registrar-solicitud',
+        canActivate: [roleGuard([ROL_REGISTRO, ROL_SUPER_USUARIO])],
+        data: { interno: true },
+        loadComponent: () => import('./features/registro/registro').then((m) => m.Registro),
       },
       {
         path: 'administracion',

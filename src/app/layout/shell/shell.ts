@@ -64,7 +64,7 @@ export class Shell implements OnInit, OnDestroy {
         { label: 'Inicio', icono: 'grafica', route: '/inicio' },
         { label: 'Solicitudes', icono: 'bandeja', route: '/solicitudes' },
       ];
-      if (this.authService.esRegistro()) base.push({ label: 'Registrar solicitud', icono: 'documento', route: '/solicitudes/nueva' });
+      if (this.authService.puedeRegistrar()) base.push({ label: 'Registrar solicitud', icono: 'documento', route: '/registrar-solicitud' });
       return this.authService.esSuperUsuario() ? [...base, ADMINISTRACION] : base;
     });
 

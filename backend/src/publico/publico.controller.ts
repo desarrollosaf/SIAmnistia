@@ -72,7 +72,7 @@ export class PublicoController {
   /** Registro capturado dentro del sistema por el rol Registro; sigue disponible aunque la cortina esté puesta. */
   @Post('solicitudes/interno')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(ROL.registro)
+  @Roles(ROL.registro, ROL.superUsuario)
   @UseInterceptors(ADJUNTOS_REGISTRO())
   async registrarInterno(@Body('datos') datos: string, @UploadedFiles() archivos: ArchivosRegistro) {
     const dto = await this.publicoService.validarDatos(datos);
