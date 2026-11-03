@@ -29,10 +29,10 @@ import { Icono } from '../../../shared/icono/icono';
           <button type="button" role="tab" [class.activo]="modo() === 'folio'" (click)="cambiarModo('folio')">Por folio</button>
         </div>
         @if (modo() === 'folio') {
-          <p class="consulta__texto">Escribe el número de folio de tu solicitud (por ejemplo 3/{{ anioActual }}) para ver su estatus.</p>
+          <p class="consulta__texto">Escribe el número de folio de tu solicitud para ver su estatus.</p>
           <form (ngSubmit)="consultarFolio()" class="consulta__form">
             <label class="form-label" for="folio">Folio de la solicitud</label>
-            <input id="folio" name="folio" type="text" class="form-control" [(ngModel)]="folio" required [placeholder]="'3/' + anioActual" autocomplete="off" inputmode="numeric" />
+            <input id="folio" name="folio" type="text" class="form-control" [(ngModel)]="folio" required placeholder="Ingresa el folio" autocomplete="off" inputmode="numeric" />
             @if (error()) {
               <p class="hint hint--error mt-2">{{ error() }}</p>
             }
@@ -100,7 +100,7 @@ export class SolicitarToken {
   consultarFolio(): void {
     const m = /^(\d+)\s*(?:\/\s*(\d{4}))?$/.exec(this.folio.trim());
     if (!m) {
-      this.error.set('Captura el folio con el formato 3/' + this.anioActual + '.');
+      this.error.set('Captura un folio válido.');
       return;
     }
     this.error.set(null);
