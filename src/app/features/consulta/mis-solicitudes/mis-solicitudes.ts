@@ -1,5 +1,5 @@
 import { Component, OnInit, input, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PublicoService, SeguimientoConsulta, SolicitudConsulta } from '../../../core/services/publico.service';
 import { mensajeError } from '../../../core/interceptors/auth.interceptor';
@@ -16,16 +16,23 @@ interface Hito {
   enlace?: { texto: string; url: string };
 }
 
-/** Solicitudes del peticionario (por la liga que recibió en su correo) y su línea de tiempo. */
+/**
+ * Solicitudes del peticionario (por la liga que recibió en su correo) y su línea de tiempo. Con folio y año
+ * en la ruta muestra solo esa solicitud.
+ */
 @Component({
   selector: 'app-mis-solicitudes',
   standalone: true,
-  imports: [DatePipe, RouterLink, Icono, Modal],
+  imports: [DatePipe, NgTemplateOutlet, RouterLink, Icono, Modal],
   templateUrl: './mis-solicitudes.html',
   styleUrl: './mis-solicitudes.scss',
 })
 export class MisSolicitudes implements OnInit {
-  readonly token = input.required<string>();
+  readonly token = input<string>();
+  readonly folio = input<string>();
+  readonly anio = input<string>();
+
+  protected readonly nusFolio = signal('');
 
   protected readonly cargando = signal(true);
   protected readonly error = signal<string | null>(null);
@@ -37,7 +44,23 @@ export class MisSolicitudes implements OnInit {
   constructor(private readonly publicoService: PublicoService) {}
 
   ngOnInit(): void {
-    this.publicoService.solicitudes(this.token()).subscribe({
+    const folio = this.folio();
+    const anio = this.anio();
+    if (folio && anio) {
+      this.publicoService.seguimientoPorFolio(folio, anio).subscribe({
+        next: (seg) => {
+          this.nusFolio.set(seg.nus);
+          this.hitos.set(this.armarHitos(seg, this.publicoService.urlNegacionPorFolio(folio, anio)));
+          this.cargando.set(false);
+        },
+        error: (e) => {
+          this.error.set(mensajeError(e, 'No se pudo consultar la solicitud.'));
+          this.cargando.set(false);
+        },
+      });
+      return;
+    }
+    this.publicoService.solicitudes(this.token()!).subscribe({
       next: (rows) => {
         this.solicitudes.set(rows);
         this.cargando.set(false);
@@ -52,8 +75,8 @@ export class MisSolicitudes implements OnInit {
   ver(s: SolicitudConsulta): void {
     this.seleccionada.set(s);
     this.hitos.set(null);
-    this.publicoService.seguimiento(this.token(), s.id).subscribe({
-      next: (seg) => this.hitos.set(this.armarHitos(seg, s.id)),
+    this.publicoService.seguimiento(this.token()!, s.id).subscribe({
+      next: (seg) => this.hitos.set(this.armarHitos(seg, this.publicoService.urlNegacion(this.token()!, s.id))),
       error: (e) => {
         this.seleccionada.set(null);
         this.error.set(mensajeError(e, 'No se pudo consultar la solicitud.'));
@@ -62,7 +85,7 @@ export class MisSolicitudes implements OnInit {
   }
 
   /** Traduce los estatus internos a una línea de tiempo comprensible para el peticionario. */
-  private armarHitos(seg: SeguimientoConsulta, solicitudId: number): Hito[] {
+  private armarHitos(seg: SeguimientoConsulta, urlNegacion: string): Hito[] {
     const hitos: Hito[] = [
       { titulo: 'Solicitud recibida', texto: 'Tu petición quedó registrada.', fecha: seg.fechaRegistro, tono: 'ok' },
     ];
@@ -78,7 +101,7 @@ export class MisSolicitudes implements OnInit {
         fecha: seg.fechaAprobacion,
         tono: 'error',
         enlace: seg.tieneDocumentoNegacion
-          ? { texto: 'Ver documento de la negación', url: this.publicoService.urlNegacion(this.token(), solicitudId) }
+          ? { texto: 'Ver documento de la negación', url: urlNegacion }
           : undefined,
       });
       return hitos;

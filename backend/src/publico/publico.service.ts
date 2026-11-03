@@ -2,7 +2,7 @@ import {
   BadRequestException, ConflictException, Injectable, Logger, NotFoundException,
 } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/sequelize';
-import { Op, Sequelize, Transaction } from 'sequelize';
+import { Includeable, Op, Sequelize, Transaction } from 'sequelize';
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 import { randomBytes } from 'crypto';
@@ -571,17 +571,40 @@ export class PublicoService {
     const email = await this.emailDeToken(token);
     const s = await this.solicitudModel.findOne({
       where: { id },
-      include: [
-        { model: Persona, as: 'solicitante', required: true, where: { email } },
-        EstatusSolicitud,
-        {
-          model: SolicitudUser,
-          include: [EstatusTurno, Recomendacion, { model: Usuario, include: [Institucion] }],
-        },
-      ],
+      include: [{ model: Persona, as: 'solicitante', required: true, where: { email } }, ...this.incluirSeguimiento()],
     });
     if (!s) throw new NotFoundException('No se encontró la solicitud');
+    return this.armarSeguimiento(s);
+  }
 
+  // Consulta por folio: sin liga ni correo; devuelve únicamente esa solicitud.
+
+  private async solicitudPorFolio(folio: number, anio: number, incluir: Includeable[] = []) {
+    const s = await this.solicitudModel.findOne({ where: { folio, anio }, include: incluir });
+    if (!s) throw new NotFoundException('No se encontró ninguna solicitud con ese folio');
+    return s;
+  }
+
+  async seguimientoPorFolio(folio: number, anio: number) {
+    return this.armarSeguimiento(await this.solicitudPorFolio(folio, anio, this.incluirSeguimiento()));
+  }
+
+  async negacionPorFolio(folio: number, anio: number) {
+    const s = await this.solicitudPorFolio(folio, anio, [EstatusSolicitud]);
+    if (s.estatus_solicitud?.nombre !== 'NO PROCEDE') throw new NotFoundException('No se encontró el documento');
+    const doc = await this.documentoNegacion(s.id);
+    if (!doc) throw new NotFoundException('No se encontró el documento');
+    return { nombre: `negacion-${s.folio}-${s.anio}.pdf`, contenido: await this.archivos.leer(doc.ruta) };
+  }
+
+  private incluirSeguimiento(): Includeable[] {
+    return [
+      EstatusSolicitud,
+      { model: SolicitudUser, include: [EstatusTurno, Recomendacion, { model: Usuario, include: [Institucion] }] },
+    ];
+  }
+
+  private async armarSeguimiento(s: Solicitud) {
     // Solicitud negada: el peticionario puede ver el documento con la razón que adjuntó la Comisión.
     const negacion = s.estatus_solicitud?.nombre === 'NO PROCEDE' ? await this.documentoNegacion(s.id) : null;
 
