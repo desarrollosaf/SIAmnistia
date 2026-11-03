@@ -74,6 +74,14 @@ export class PublicoService {
     return this.http.get<SolicitudConsulta[]>(`${this.url}/consulta/${token}`);
   }
 
+  seguimientoPorFolio(folio: string | number, anio: string | number): Observable<SeguimientoConsulta> {
+    return this.http.get<SeguimientoConsulta>(`${this.url}/consulta/folio/${folio}/${anio}`);
+  }
+
+  urlNegacionPorFolio(folio: string | number, anio: string | number): string {
+    return `${this.url}/consulta/folio/${folio}/${anio}/negacion`;
+  }
+
   urlNegacion(token: string, id: number): string {
     return `${this.url}/consulta/${token}/solicitudes/${id}/negacion`;
   }

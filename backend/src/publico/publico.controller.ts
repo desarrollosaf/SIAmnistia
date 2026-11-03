@@ -109,6 +109,20 @@ export class PublicoController {
     return this.publicoService.generarToken(dto.email);
   }
 
+  @Get('consulta/folio/:folio/:anio')
+  seguimientoPorFolio(@Param('folio', ParseIntPipe) folio: number, @Param('anio', ParseIntPipe) anio: number) {
+    return this.publicoService.seguimientoPorFolio(folio, anio);
+  }
+
+  @Get('consulta/folio/:folio/:anio/negacion')
+  async negacionPorFolio(
+    @Param('folio', ParseIntPipe) folio: number,
+    @Param('anio', ParseIntPipe) anio: number,
+    @Res() res: Response,
+  ) {
+    this.enviarPdf(res, await this.publicoService.negacionPorFolio(folio, anio), false);
+  }
+
   @Get('consulta/:token')
   solicitudes(@Param('token') token: string) {
     return this.publicoService.solicitudesPorToken(token);
