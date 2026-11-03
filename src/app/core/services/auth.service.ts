@@ -30,7 +30,8 @@ const USER_KEY = 'amn_user';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   readonly currentUser = signal<AuthUser | null>(this.readStoredUser());
-  readonly esRegistro = computed(() => this.currentUser()?.roles.includes(ROL_REGISTRO) ?? false);
+  /** Puede capturar solicitudes dentro del sistema: rol Registro o Super usuario. */
+  readonly puedeRegistrar = computed(() => this.currentUser()?.roles.some((r) => r === ROL_REGISTRO || r === ROL_SUPER_USUARIO) ?? false);
   readonly esSuperUsuario = computed(() => this.currentUser()?.roles.includes(ROL_SUPER_USUARIO) ?? false);
   readonly esLegislativo = computed(() => this.currentUser()?.legislativo ?? false);
 
